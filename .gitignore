@@ -1,0 +1,87 @@
+# 操作系统生成的文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE 和编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+*.tmp
+*.temp
+
+# 前端相关 (Node.js/React/Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+frontend/.vite
+frontend/.cache
+
+# 后端相关 (Go)
+backend/tmp/
+backend/*.exe
+backend/*.exe~
+backend/*.dll
+backend/*.so
+backend/*.dylib
+backend/vendor/
+backend/.env
+backend/.env.local
+
+# 上传和输出文件夹
+uploads/*
+!uploads/.gitkeep
+output/*
+!output/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/output/*
+!backend/output/.gitkeep
+
+# Docker 相关
+.docker/
+
+# 测试覆盖率报告
+coverage/
+*.out
+
+# Go 模块缓存
+go.sum.backup
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 配置文件中的敏感信息
+config/local.*
+*.key
+*.pem
+*.crt
+
+# 其他
+*.pid
+*.seed
+*.pid.lock
