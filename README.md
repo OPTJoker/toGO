@@ -195,23 +195,12 @@ Content-Type: multipart/form-data
    }
    ```
 
-## 贡献指南
-
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/新功能`)
-3. 提交更改 (`git commit -am '添加新功能'`)
-4. 推送到分支 (`git push origin feature/新功能`)
-5. 创建 Pull Request
-
 ## 许可证
 
-MIT License
+不采用任何许可，你随便造
 
 ## 联系方式
 
-- 项目地址: [GitHub Repository]
-- 问题反馈: [Issues]
+- 项目地址: [https://github.com/OPTJoker/toGO]
+- 问题反馈: [https://github.com/OPTJoker/toGO/issues]
 
----
-
-⭐ 如果这个项目对你有帮助，请给它一个星标！
