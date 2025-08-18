@@ -17,6 +17,7 @@ cat /etc/os-release | grep PRETTY_NAME
 echo ""
 
 # 第一步：安装Go
+# 修改deploy-ubuntu24.sh中的install_go函数
 install_go() {
     echo "📦 安装Go..."
     
@@ -25,21 +26,28 @@ install_go() {
         return 0
     fi
     
-    # 下载Go
+    # 下载最新的Go 1.22版本
     cd /tmp
-    echo "下载Go 1.21.6..."
-    wget -q https://go.dev/dl/go1.21.6.linux-amd64.tar.gz
+    echo "下载Go 1.22.10..."
+    wget -q https://go.dev/dl/go1.22.10.linux-amd64.tar.gz
     
     # 安装Go
     echo "安装Go到/usr/local/go..."
     sudo rm -rf /usr/local/go
-    sudo tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz
-    rm -f go1.21.6.linux-amd64.tar.gz
+    sudo tar -C /usr/local -xzf go1.22.10.linux-amd64.tar.gz
+    rm -f go1.22.10.linux-amd64.tar.gz
     
-    # 设置环境变量
+    # 设置环境变量（不禁用GOSUMDB）
     echo "设置Go环境变量..."
-    echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+    if ! grep -q "/usr/local/go/bin" ~/.bashrc; then
+        echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+        echo 'export GOROOT=/usr/local/go' >> ~/.bashrc
+        echo 'export GOPROXY=https://goproxy.cn,direct' >> ~/.bashrc
+    fi
+    
     export PATH=$PATH:/usr/local/go/bin
+    export GOROOT=/usr/local/go
+    export GOPROXY=https://goproxy.cn,http://artifactory.intra.ke.com/artifactory/api/go/go-local-repository,direct
     
     # 验证安装
     if /usr/local/go/bin/go version; then
