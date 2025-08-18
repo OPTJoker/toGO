@@ -21,8 +21,23 @@ check_dependencies() {
         echo "安装Go..."
         wget https://go.dev/dl/go1.21.6.linux-amd64.tar.gz
         sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz
+        rm -f go1.21.6.linux-amd64.tar.gz
+        
+        # 直接在当前shell中设置PATH
+        export PATH=$PATH:/usr/local/go/bin
+        
+        # 写入profile文件供将来使用  
         echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
-        source ~/.bashrc
+        
+        # 验证安装
+        if command -v go &> /dev/null; then
+            echo "Go安装成功，版本: $(go version)"
+        else
+            echo "Go安装可能有问题，手动设置PATH"
+            export PATH=/usr/local/go/bin:$PATH
+        fi
+    else
+        echo "Go已安装，版本: $(go version)"
     fi
     
     # 检查Node.js是否安装
@@ -51,6 +66,21 @@ check_dependencies() {
 # 构建后端
 build_backend() {
     echo "🔨 构建后端应用..."
+    
+    # 确保Go在PATH中（兼容Ubuntu 24.04）
+    if ! command -v go &> /dev/null; then
+        export PATH=/usr/local/go/bin:$PATH
+    fi
+    
+    # 验证Go是否可用
+    if ! command -v go &> /dev/null; then
+        echo -e "${RED}❌ Go命令不可用，请检查安装${NC}"
+        echo "当前PATH: $PATH"
+        ls -la /usr/local/go/bin/ 2>/dev/null || echo "Go目录不存在"
+        exit 1
+    fi
+    
+    echo "使用Go版本: $(go version)"
     
     cd backend
     
