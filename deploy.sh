@@ -1,201 +1,111 @@
 #!/bin/bash
 
-# toGO 生产环境部署脚本
-# 针对 4核8G + 40GB SSD + 4Mbps 带宽优化
+# toGO 中国区优化部署脚本
 
 set -e
 
-echo "🚀 开始部署 toGO 工具网站..."
+echo "🚀 开始部署 toGO 工具网站（中国区优化）..."
 
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# 检查系统资源
-check_system() {
-    echo "📊 检查系统资源..."
+# 配置Docker镜像加速
+configure_docker() {
+    echo "🐳 配置Docker镜像加速..."
     
-    # 检查内存
-    TOTAL_MEM=$(free -m | awk 'NR==2{printf "%.0f", $2}')
-    if [ $TOTAL_MEM -lt 7000 ]; then
-        echo -e "${YELLOW}警告: 系统内存少于8GB，当前: ${TOTAL_MEM}MB${NC}"
-    fi
+    sudo mkdir -p /etc/docker
     
-    # 检查磁盘空间
-    DISK_USAGE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
-    if [ $DISK_USAGE -gt 80 ]; then
-        echo -e "${RED}错误: 磁盘使用率超过80%，当前: ${DISK_USAGE}%${NC}"
-        exit 1
-    fi
+    sudo tee /etc/docker/daemon.json <<-'DOCKEREOF'
+{
+  "registry-mirrors": [
+    "https://docker.mirrors.ustc.edu.cn",
+    "https://hub-mirror.c.163.com",
+    "https://mirror.baidubce.com"
+  ],
+  "max-concurrent-downloads": 10,
+  "log-driver": "json-file",
+  "log-level": "warn",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
+}
+DOCKEREOF
+
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
     
-    echo -e "${GREEN}✅ 系统资源检查通过${NC}"
+    echo -e "${GREEN}✅ Docker镜像加速配置完成${NC}"
 }
 
-# 安装依赖
-install_dependencies() {
-    echo "📦 安装必要依赖..."
+# 预拉取镜像
+pull_images() {
+    echo "📦 预拉取镜像..."
     
-    # 更新包列表
-    sudo apt update
+    docker pull registry.cn-hangzhou.aliyuncs.com/acs/golang:1.21-alpine
+    docker pull registry.cn-hangzhou.aliyuncs.com/acs/alpine:latest
+    docker pull registry.cn-hangzhou.aliyuncs.com/acs/node:18-alpine
+    docker pull registry.cn-hangzhou.aliyuncs.com/acs/nginx:alpine
     
-    # 安装基础工具
-    sudo apt install -y curl wget git vim htop
-    
-    # 安装Docker（如果未安装）
-    if ! command -v docker &> /dev/null; then
-        echo "安装 Docker..."
-        curl -fsSL https://get.docker.com -o get-docker.sh
-        sudo sh get-docker.sh
-        sudo usermod -aG docker $USER
-        rm get-docker.sh
-    fi
-    
-    # 安装Docker Compose
-    if ! command -v docker-compose &> /dev/null; then
-        echo "安装 Docker Compose..."
-        sudo apt install -y docker-compose-plugin
-    fi
-    
-    echo -e "${GREEN}✅ 依赖安装完成${NC}"
-}
-
-# 系统优化
-optimize_system() {
-    echo "⚡ 系统优化配置..."
-    
-    # 设置交换分区（如果内存不足）
-    if [ ! -f /swapfile ]; then
-        echo "创建2GB交换分区..."
-        sudo fallocate -l 2G /swapfile
-        sudo chmod 600 /swapfile
-        sudo mkswap /swapfile
-        sudo swapon /swapfile
-        echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-    fi
-    
-    # 优化内核参数
-    sudo tee -a /etc/sysctl.conf << EOF
-# toGO 优化配置
-vm.swappiness=10
-net.core.rmem_max=16777216
-net.core.wmem_max=16777216
-net.ipv4.tcp_rmem=4096 16384 16777216
-net.ipv4.tcp_wmem=4096 16384 16777216
-EOF
-    
-    sudo sysctl -p
-    
-    echo -e "${GREEN}✅ 系统优化完成${NC}"
+    echo -e "${GREEN}✅ 镜像拉取完成${NC}"
 }
 
 # 部署应用
 deploy_app() {
-    echo "🐳 部署应用..."
-    
-    # 更新项目代码
-    git pull origin main
+    echo "🚀 部署应用..."
     
     # 停止旧容器
-    docker-compose down
+    docker-compose down 2>/dev/null || true
     
     # 清理旧镜像
     docker system prune -f
     
-    # 构建并启动
-    docker-compose up --build -d
+    # 构建并启动（增加超时时间）
+    DOCKER_CLIENT_TIMEOUT=300 COMPOSE_HTTP_TIMEOUT=300 docker-compose up --build -d
     
     echo -e "${GREEN}✅ 应用部署完成${NC}"
 }
 
-# 设置定时任务
-setup_cron() {
-    echo "⏰ 设置定时任务..."
+# 健康检查
+health_check() {
+    echo "🔍 健康检查..."
     
-    # 每天凌晨2点清理Docker系统
-    (crontab -l 2>/dev/null; echo "0 2 * * * cd $(pwd) && docker system prune -f") | crontab -
+    # 等待服务启动
+    sleep 30
     
-    # 每周日凌晨3点重启应用
-    (crontab -l 2>/dev/null; echo "0 3 * * 0 cd $(pwd) && docker-compose restart") | crontab -
+    # 检查容器状态
+    docker-compose ps
     
-    echo -e "${GREEN}✅ 定时任务设置完成${NC}"
-}
-
-# 创建监控脚本
-create_monitoring() {
-    echo "📊 创建监控脚本..."
+    # 检查后端健康
+    if curl -f http://localhost:8080/api/health >/dev/null 2>&1; then
+        echo -e "${GREEN}✅ 后端服务正常${NC}"
+    else
+        echo -e "${RED}❌ 后端服务异常${NC}"
+        docker-compose logs backend
+    fi
     
-    cat > monitor.sh << 'EOF'
-#!/bin/bash
-
-# toGO 监控脚本
-
-echo "=== toGO 系统监控 $(date) ==="
-
-# 检查容器状态
-echo "📦 容器状态:"
-docker-compose ps
-
-# 检查资源使用
-echo "💾 内存使用:"
-free -h
-
-echo "💿 磁盘使用:"
-df -h /
-
-echo "🔄 CPU负载:"
-uptime
-
-# 检查应用状态
-echo "🌐 应用状态:"
-curl -s http://localhost:8080/api/health-simple | head -1
-
-# 检查文件大小
-echo "📁 存储使用:"
-du -sh backend/uploads backend/output 2>/dev/null || echo "目录不存在"
-
-echo "================================"
-EOF
-    
-    chmod +x monitor.sh
-    
-    echo -e "${GREEN}✅ 监控脚本创建完成${NC}"
+    # 检查前端
+    if curl -f http://localhost >/dev/null 2>&1; then
+        echo -e "${GREEN}✅ 前端服务正常${NC}"
+    else
+        echo -e "${RED}❌ 前端服务异常${NC}"
+        docker-compose logs frontend
+    fi
 }
 
 # 主函数
 main() {
-    echo "🔧 toGO 生产环境部署工具"
-    echo "适配配置: 4核8G + 40GB SSD + 4Mbps"
-    echo ""
-    
-    check_system
-    install_dependencies
-    optimize_system
+    configure_docker
+    pull_images
     deploy_app
-    setup_cron
-    create_monitoring
+    health_check
     
     echo ""
     echo -e "${GREEN}🎉 部署完成！${NC}"
-    echo ""
-    echo "📌 访问地址:"
-    echo "   前端: http://localhost:3000"
-    echo "   后端: http://localhost:8080"
-    echo ""
-    echo "🔧 管理命令:"
-    echo "   查看状态: docker-compose ps"
-    echo "   查看日志: docker-compose logs -f"
-    echo "   重启服务: docker-compose restart"
-    echo "   停止服务: docker-compose down"
-    echo "   系统监控: ./monitor.sh"
-    echo ""
-    echo "⚠️  注意事项:"
-    echo "   - 定期运行 ./monitor.sh 检查系统状态"
-    echo "   - 文件会自动清理，无需手动管理"
-    echo "   - 上传文件限制50MB以适配带宽"
-    echo ""
+    echo "访问地址: http://$(curl -s ifconfig.me || echo 'YOUR_SERVER_IP')"
 }
 
-# 执行主函数
 main "$@"
