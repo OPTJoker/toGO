@@ -36,6 +36,24 @@ export interface VideoToGifResponse {
   fileSize: number;
   duration: number;
   videoDuration: number;
+  zipUrl?: string;           // ZIP压缩包下载链接（仅大文件）
+  zipSize?: number;          // ZIP文件大小（仅大文件）
+  compressionRatio?: number; // 压缩率（仅大文件）
+}
+
+// 文件压缩响应类型
+export interface CompressionResponse {
+  compressedUrl: string;
+  originalSize: number;
+  compressedSize: number;
+  compressionRatio: number;
+  savedBytes: number;
+}
+
+// 文件解压响应类型
+export interface DecompressionResponse {
+  decompressedUrl: string;
+  filename: string;
 }
 
 // 转换历史记录类型

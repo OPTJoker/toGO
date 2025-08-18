@@ -19,10 +19,13 @@ type VideoToGifRequest struct {
 
 // VideoToGifResponse 视频转GIF响应
 type VideoToGifResponse struct {
-	GifURL        string  `json:"gifUrl"`
-	FileSize      int64   `json:"fileSize"`
-	Duration      float64 `json:"duration"`
-	VideoDuration float64 `json:"videoDuration"`
+	GifURL           string   `json:"gifUrl"`
+	FileSize         int64    `json:"fileSize"`
+	Duration         float64  `json:"duration"`
+	VideoDuration    float64  `json:"videoDuration"`
+	ZipURL           *string  `json:"zipUrl,omitempty"`           // ZIP压缩包下载链接（仅大文件）
+	ZipSize          *int64   `json:"zipSize,omitempty"`          // ZIP文件大小（仅大文件）
+	CompressionRatio *float64 `json:"compressionRatio,omitempty"` // 压缩率（仅大文件）
 }
 
 // ConversionHistoryItem 转换历史记录项

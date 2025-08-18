@@ -125,4 +125,13 @@ export const tools: Tool[] = [
     path: '/tools/password-generator',
     implemented: true,
   },
+  {
+    id: 'system-monitor',
+    name: '系统监控',
+    description: '监控服务器资源使用情况和文件存储',
+    category: categories[1],
+    icon: 'MonitorOutlined',
+    path: '/tools/system-monitor',
+    implemented: true,
+  },
 ];

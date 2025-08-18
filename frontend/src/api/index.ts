@@ -1,11 +1,17 @@
 import axios from 'axios';
-import type { ApiResponse, VideoToGifRequest, VideoToGifResponse, ConversionHistoryItem } from '../types';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:19988/api';
+import type { 
+  ApiResponse, 
+  VideoToGifRequest, 
+  VideoToGifResponse, 
+  ConversionHistoryItem,
+  CompressionResponse,
+  DecompressionResponse
+} from '../types';
+import { API_CONFIG } from '../config';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000, // 30秒超时，适合文件上传
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
 });
 
 // 响应拦截器
@@ -66,6 +72,21 @@ export const videoToGifApi = {
   // 删除转换历史记录
   deleteHistory: async (id: string): Promise<void> => {
     await api.delete(`/video/history/${id}`);
+  },
+};
+
+// 文件压缩 API
+export const compressionApi = {
+  // 压缩文件
+  compressFile: async (filename: string): Promise<CompressionResponse> => {
+    const response: ApiResponse<CompressionResponse> = await api.post(`/compress/file/${filename}`);
+    return response.data;
+  },
+
+  // 解压文件
+  decompressFile: async (filename: string): Promise<DecompressionResponse> => {
+    const response: ApiResponse<DecompressionResponse> = await api.post(`/compress/decompress/${filename}`);
+    return response.data;
   },
 };
 

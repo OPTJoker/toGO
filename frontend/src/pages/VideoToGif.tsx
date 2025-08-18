@@ -21,11 +21,15 @@ import {
   InboxOutlined, 
   PlayCircleOutlined, 
   DownloadOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  CompressOutlined,
+  InfoCircleOutlined
 } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
 import { videoToGifApi } from '../api';
 import type { VideoToGifRequest, ConversionHistoryItem } from '../types';
+import { ClientCompressionService } from '../utils/compression';
+import { buildStaticUrl } from '../config';
 
 const { Paragraph } = Typography;
 const { Dragger } = Upload;
@@ -43,11 +47,21 @@ const VideoToGif: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string>('');
-  const [gifResult, setGifResult] = useState<{url: string; size: number; duration: number; videoDuration: number} | null>(null);
+  const [gifResult, setGifResult] = useState<{
+    url: string; 
+    size: number; 
+    duration: number; 
+    videoDuration: number;
+    zipUrl?: string;
+    zipSize?: number;
+    compressionRatio?: number;
+  } | null>(null);
   const [historyList, setHistoryList] = useState<ConversionHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [currentPageSize, setCurrentPageSize] = useState(20);  // 添加页面大小状态
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);  // 删除确认弹窗状态
+  const [currentPageSize, setCurrentPageSize] = useState(20);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0); // 上传进度
+  const [isUploading, setIsUploading] = useState(false); // 上传状态
   const [itemToDelete, setItemToDelete] = useState<ConversionHistoryItem | null>(null);  // 要删除的项目
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -98,22 +112,52 @@ const VideoToGif: React.FC = () => {
     name: 'video',
     multiple: false,
     accept: 'video/*',
-    beforeUpload: (file) => {
+    beforeUpload: async (file) => {
       const isVideo = file.type.startsWith('video/');
       if (!isVideo) {
-        alert('只能上传视频文件！');
+        message.error('只能上传视频文件！');
         return false;
       }
       
-      const isLt100M = file.size / 1024 / 1024 < 100;
-      if (!isLt100M) {
-        alert('视频文件大小不能超过 100MB！');
+      const isLt50M = file.size / 1024 / 1024 < 50;
+      if (!isLt50M) {
+        message.error('视频文件大小不能超过 50MB！请压缩后上传');
         return false;
       }
 
-      setVideoFile(file);
+      // 检查是否需要压缩（>= 8MB）
+      let fileToProcess = file;
+      if (ClientCompressionService.shouldCompress(file)) {
+        try {
+          setIsUploading(true);
+          setUploadProgress(20);
+          message.info('文件较大，正在自动压缩...');
+          
+          const compressedFile = await ClientCompressionService.compressFile(file);
+          // 创建新的File对象以兼容上传组件
+          fileToProcess = new File([compressedFile], compressedFile.name, {
+            type: compressedFile.type,
+            lastModified: Date.now()
+          }) as any;
+          setUploadProgress(60);
+          
+          message.success(`压缩完成！文件大小从 ${ClientCompressionService.formatFileSize(file.size)} 减少到 ${ClientCompressionService.formatFileSize(fileToProcess.size)}`);
+        } catch (error) {
+          console.error('压缩失败:', error);
+          message.warning('自动压缩失败，将使用原文件上传');
+          fileToProcess = file;
+        } finally {
+          setUploadProgress(100);
+          setTimeout(() => {
+            setIsUploading(false);
+            setUploadProgress(0);
+          }, 1000);
+        }
+      }
+
+      setVideoFile(fileToProcess);
       
-      // 创建预览
+      // 创建预览（使用原文件）
       const url = URL.createObjectURL(file);
       setVideoPreview(url);
       
@@ -150,7 +194,7 @@ const VideoToGif: React.FC = () => {
 
   const handleConvert = async (values: ConvertForm) => {
     if (!videoFile) {
-      alert('请先上传视频文件');
+      message.error('请先上传视频文件');
       return;
     }
 
@@ -185,6 +229,9 @@ const VideoToGif: React.FC = () => {
         size: result.fileSize,
         duration: result.duration,
         videoDuration: result.videoDuration,
+        zipUrl: result.zipUrl,
+        zipSize: result.zipSize,
+        compressionRatio: result.compressionRatio,
       });
       
       // 转换成功后刷新历史记录
@@ -231,13 +278,28 @@ const VideoToGif: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // 手动压缩文件
+  const handleDownloadZip = async () => {
+    if (gifResult && gifResult.zipUrl) {
+      try {
+        // 使用配置工具构建完整的下载URL
+        const downloadUrl = buildStaticUrl(gifResult.zipUrl);
+        
+        // 直接打开下载链接
+        window.open(downloadUrl, '_blank');
+        message.success('ZIP文件下载开始');
+      } catch (error) {
+        console.error('下载失败:', error);
+        message.error('下载失败，请重试');
+      }
+    }
+  };
+
   const handleDownload = async () => {
     if (gifResult) {
       try {
-        // 构建完整的下载URL
-        const downloadUrl = gifResult.url.startsWith('http') 
-          ? gifResult.url 
-          : `http://localhost:19988${gifResult.url}`;
+        // 使用配置工具构建完整的下载URL
+        const downloadUrl = buildStaticUrl(gifResult.url);
         
         // 使用fetch获取二进制数据
         const response = await fetch(downloadUrl);
@@ -294,9 +356,27 @@ const VideoToGif: React.FC = () => {
               <p className="ant-upload-text">点击或拖拽视频文件到此区域上传</p>
               <div className="ant-upload-hint">
                 <p style={{ margin: '4px 0' }}>支持上传MP4、AVI、MOV等常见视频格式</p>
-                <p style={{ margin: '4px 0' }}>文件大小限制为100MB</p>
+                <p style={{ margin: '4px 0' }}>文件大小限制为50MB（适配服务器带宽）</p>
+                <p style={{ margin: '4px 0', color: '#1890ff' }}>
+                  <CompressOutlined /> ≥8MB的文件：上传时自动压缩，生成的GIF≥8MB时提供ZIP下载
+                </p>
+                <p style={{ margin: '4px 0', color: '#52c41a' }}>
+                  📁 &lt;8MB的文件：直接上传和下载，无需压缩
+                </p>
               </div>
             </Dragger>
+
+            {/* 上传压缩进度 */}
+            {isUploading && (
+              <Card size="small" style={{ marginTop: 16 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <Progress percent={uploadProgress} />
+                  <p style={{ marginTop: 8, color: '#666' }}>
+                    正在处理文件...
+                  </p>
+                </div>
+              </Card>
+            )}
 
             {videoPreview && (
               <div style={{ textAlign: 'center' }}>
@@ -409,13 +489,25 @@ const VideoToGif: React.FC = () => {
             <Card 
               title="转换结果" 
               extra={
-                <Button 
-                  type="primary" 
-                  icon={<DownloadOutlined />}
-                  onClick={handleDownload}
-                >
-                  下载GIF
-                </Button>
+                <Space>
+                  <Button 
+                    type="primary" 
+                    icon={<DownloadOutlined />}
+                    onClick={handleDownload}
+                  >
+                    下载GIF
+                  </Button>
+                  {gifResult.zipUrl && (
+                    <Button 
+                      type="primary"
+                      icon={<CompressOutlined />}
+                      onClick={handleDownloadZip}
+                      style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                    >
+                      下载ZIP
+                    </Button>
+                  )}
+                </Space>
               }
             >
               <Space direction="vertical" style={{ width: '100%' }}>
@@ -447,6 +539,54 @@ const VideoToGif: React.FC = () => {
                     </Paragraph>
                   </Col>
                 </Row>
+
+                {/* ZIP压缩包信息显示 - 只有当ZIP存在时才显示 */}
+                {gifResult.zipUrl && gifResult.zipSize && gifResult.compressionRatio && (
+                  <>
+                    <Divider />
+                    <Card size="small" title={<><CompressOutlined /> ZIP压缩包</>}>
+                      <Row gutter={16}>
+                        <Col span={6}>
+                          <Paragraph>
+                            <strong>ZIP大小:</strong><br/>
+                            {formatFileSize(gifResult.zipSize)}
+                          </Paragraph>
+                        </Col>
+                        <Col span={6}>
+                          <Paragraph>
+                            <strong>压缩率:</strong><br/>
+                            {gifResult.compressionRatio.toFixed(1)}%
+                          </Paragraph>
+                        </Col>
+                        <Col span={6}>
+                          <Paragraph>
+                            <strong>节省空间:</strong><br/>
+                            {formatFileSize(gifResult.size - gifResult.zipSize)}
+                          </Paragraph>
+                        </Col>
+                        <Col span={6}>
+                          <Paragraph>
+                            <InfoCircleOutlined style={{ color: '#52c41a' }} />
+                            <span style={{ marginLeft: 8 }}>已自动打包为ZIP</span>
+                          </Paragraph>
+                        </Col>
+                      </Row>
+                    </Card>
+                  </>
+                )}
+                
+                {/* 当文件小于8MB时显示提示 */}
+                {!gifResult.zipUrl && (
+                  <>
+                    <Divider />
+                    <Card size="small" style={{ backgroundColor: '#f6ffed', border: '1px solid #b7eb8f' }}>
+                      <Paragraph style={{ margin: 0, color: '#52c41a' }}>
+                        <InfoCircleOutlined style={{ marginRight: 8 }} />
+                        文件小于8MB，可直接下载GIF文件
+                      </Paragraph>
+                    </Card>
+                  </>
+                )}
               </Space>
             </Card>
           )}
@@ -496,10 +636,8 @@ const VideoToGif: React.FC = () => {
                         e.preventDefault();
                         e.stopPropagation();
                         try {
-                          // 构建完整的下载URL
-                          const downloadUrl = item.gifUrl.startsWith('http') 
-                            ? item.gifUrl 
-                            : `http://localhost:19988${item.gifUrl}`;
+                          // 使用配置工具构建完整的下载URL
+                          const downloadUrl = buildStaticUrl(item.gifUrl);
                             
                           // 使用fetch获取二进制数据，强制下载
                           const response = await fetch(downloadUrl, {

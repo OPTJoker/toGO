@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"toGif-backend/internal/config"
 	"toGif-backend/internal/models"
 	"toGif-backend/internal/utils"
 
@@ -36,25 +37,30 @@ func VideoToGif(c *gin.Context) {
 	}
 
 	// 验证文件类型
+	fmt.Printf("上传文件名: %s\n", file.Filename)
 	if !isVideoFile(file.Filename) {
+		fmt.Printf("文件类型验证失败: %s\n", file.Filename)
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Code:    400,
 			Message: "不支持的文件格式，请上传视频文件",
 		})
 		return
 	}
+	fmt.Printf("文件类型验证通过: %s\n", file.Filename)
 
-	// 检查文件大小 (100MB限制)
-	if file.Size > 100*1024*1024 {
+	// 检查文件大小 (50MB限制，适配4Mbps带宽)
+	maxFileSize := int64(50 * 1024 * 1024) // 50MB
+	if file.Size > maxFileSize {
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Code:    400,
-			Message: "文件大小不能超过100MB",
+			Message: "文件大小不能超过50MB，请压缩后上传",
 		})
 		return
 	}
 
 	// 创建FFmpeg服务实例
 	ffmpegService := utils.NewFFmpegService()
+	compressionService := utils.NewCompressionService()
 
 	// 检查FFmpeg是否安装
 	if err := ffmpegService.CheckFFmpegInstallation(); err != nil {
@@ -66,15 +72,56 @@ func VideoToGif(c *gin.Context) {
 	}
 
 	// 保存上传的文件
-	inputFilename := utils.GenerateUniqueFilename(getFileExtension(file.Filename))
+	// 如果是压缩文件，使用原始文件的扩展名
+	originalFilename := file.Filename
+	if strings.HasSuffix(strings.ToLower(file.Filename), ".gz") {
+		originalFilename = strings.TrimSuffix(file.Filename, ".gz")
+		originalFilename = strings.TrimSuffix(originalFilename, ".GZ")
+	}
+
+	inputFilename := utils.GenerateUniqueFilename(getFileExtension(originalFilename))
 	inputPath := filepath.Join("uploads", inputFilename)
 
-	if err := c.SaveUploadedFile(file, inputPath); err != nil {
+	// 先保存上传的文件到临时位置
+	tempPath := inputPath + ".temp"
+	if err := c.SaveUploadedFile(file, tempPath); err != nil {
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Code:    500,
 			Message: "文件保存失败: " + err.Error(),
 		})
 		return
+	}
+
+	// 检查是否需要解压缩上传的文件（通过文件内容检测）
+	fmt.Printf("检查文件是否需要解压: %s\n", tempPath)
+	if compressionService.IsFileCompressedContent(tempPath) {
+		fmt.Printf("检测到压缩文件，开始解压: %s -> %s\n", tempPath, inputPath)
+		// 如果是压缩文件，解压到最终位置
+		if err := compressionService.DecompressFile(tempPath, inputPath); err != nil {
+			os.Remove(tempPath) // 清理临时文件
+			fmt.Printf("文件解压失败: %v\n", err)
+			c.JSON(http.StatusInternalServerError, models.APIResponse{
+				Code:    500,
+				Message: "文件解压失败: " + err.Error(),
+			})
+			return
+		}
+
+		// 删除临时压缩文件
+		os.Remove(tempPath)
+		fmt.Printf("文件解压成功: %s -> %s\n", tempPath, inputPath)
+	} else {
+		fmt.Printf("未压缩文件，直接移动: %s -> %s\n", tempPath, inputPath)
+		// 直接移动文件到最终位置
+		if err := os.Rename(tempPath, inputPath); err != nil {
+			os.Remove(tempPath) // 清理临时文件
+			c.JSON(http.StatusInternalServerError, models.APIResponse{
+				Code:    500,
+				Message: "文件移动失败: " + err.Error(),
+			})
+			return
+		}
+		fmt.Printf("文件直接保存: %s\n", inputPath)
 	}
 
 	// 确保在函数结束时清理临时文件
@@ -205,18 +252,191 @@ func VideoToGif(c *gin.Context) {
 		return
 	}
 
-	// 构建响应 - 返回完整的URL
-	baseURL := "http://localhost:19988" // 可以从环境变量或配置文件读取
+	// 构建基础响应
 	response := models.VideoToGifResponse{
-		GifURL:        fmt.Sprintf("%s/static/%s", baseURL, outputFilename),
+		GifURL:        config.BuildStaticURL(outputFilename),
 		FileSize:      fileSize,
 		Duration:      duration,
 		VideoDuration: videoDuration,
 	}
 
+	// 只有当GIF文件>=8MB时才创建ZIP压缩包
+	const compressionThreshold = 8 * 1024 * 1024 // 8MB
+	if fileSize >= compressionThreshold {
+		fmt.Printf("GIF文件大小: %d bytes, 达到压缩阈值(%d bytes)，创建ZIP压缩包\n", fileSize, compressionThreshold)
+
+		zipFilename := strings.Replace(outputFilename, ".gif", ".zip", 1)
+		zipPath := filepath.Join("output", zipFilename)
+
+		// 创建ZIP压缩包
+		if err := compressionService.CreateZipArchive([]string{outputPath}, zipPath); err != nil {
+			// ZIP创建失败不影响主流程，仅记录日志
+			fmt.Printf("创建ZIP压缩包失败: %v\n", err)
+		} else {
+			// 获取ZIP文件大小
+			if zipSize, err := utils.GetFileSize(zipPath); err == nil {
+				zipURL := config.BuildStaticURL(zipFilename)
+				compressionRatio := compressionService.GetCompressionRatio(fileSize, zipSize)
+
+				// 添加ZIP信息到响应
+				response.ZipURL = &zipURL
+				response.ZipSize = &zipSize
+				response.CompressionRatio = &compressionRatio
+
+				fmt.Printf("ZIP压缩包创建成功: %s, 大小: %d bytes, 压缩率: %.1f%%\n",
+					zipFilename, zipSize, compressionRatio)
+			}
+		}
+	} else {
+		fmt.Printf("GIF文件大小: %d bytes, 未达到压缩阈值(%d bytes)，跳过ZIP创建\n", fileSize, compressionThreshold)
+	}
+
 	c.JSON(http.StatusOK, models.APIResponse{
 		Code:    200,
 		Message: "转换成功",
+		Data:    response,
+	})
+}
+
+// CompressFile 压缩文件接口
+func CompressFile(c *gin.Context) {
+	filename := c.Param("filename")
+	if filename == "" {
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Code:    400,
+			Message: "文件名不能为空",
+		})
+		return
+	}
+
+	// 构建文件路径
+	filePath := filepath.Join("output", filename)
+
+	// 检查文件是否存在
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, models.APIResponse{
+			Code:    404,
+			Message: "文件不存在",
+		})
+		return
+	}
+
+	// 检查是否已经是压缩文件
+	compressionService := utils.NewCompressionService()
+	if compressionService.IsFileCompressed(filename) {
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Code:    400,
+			Message: "文件已经是压缩格式",
+		})
+		return
+	}
+
+	// 生成压缩文件路径
+	compressedFilename := filename + ".gz"
+	compressedPath := filepath.Join("output", compressedFilename)
+
+	// 压缩文件
+	if err := compressionService.CompressFile(filePath, compressedPath); err != nil {
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Code:    500,
+			Message: "文件压缩失败: " + err.Error(),
+		})
+		return
+	}
+
+	// 获取压缩后文件大小
+	compressedSize, err := utils.GetFileSize(compressedPath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Code:    500,
+			Message: "获取压缩文件大小失败: " + err.Error(),
+		})
+		return
+	}
+
+	// 获取原文件大小
+	originalSize, err := utils.GetFileSize(filePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Code:    500,
+			Message: "获取原文件大小失败: " + err.Error(),
+		})
+		return
+	}
+
+	// 计算压缩率
+	compressionRatio := compressionService.GetCompressionRatio(originalSize, compressedSize)
+
+	response := map[string]interface{}{
+		"compressedUrl":    config.BuildStaticURL(compressedFilename),
+		"originalSize":     originalSize,
+		"compressedSize":   compressedSize,
+		"compressionRatio": compressionRatio,
+		"savedBytes":       originalSize - compressedSize,
+	}
+
+	c.JSON(http.StatusOK, models.APIResponse{
+		Code:    200,
+		Message: "压缩成功",
+		Data:    response,
+	})
+}
+
+// DecompressFile 解压文件接口
+func DecompressFile(c *gin.Context) {
+	filename := c.Param("filename")
+	if filename == "" {
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Code:    400,
+			Message: "文件名不能为空",
+		})
+		return
+	}
+
+	// 构建文件路径
+	filePath := filepath.Join("output", filename)
+
+	// 检查文件是否存在
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, models.APIResponse{
+			Code:    404,
+			Message: "文件不存在",
+		})
+		return
+	}
+
+	compressionService := utils.NewCompressionService()
+
+	// 检查是否是支持的压缩格式
+	if !strings.HasSuffix(strings.ToLower(filename), ".gz") {
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Code:    400,
+			Message: "不支持的压缩格式，目前只支持.gz格式",
+		})
+		return
+	}
+
+	// 生成解压文件路径
+	decompressedFilename := strings.TrimSuffix(filename, ".gz")
+	decompressedPath := filepath.Join("output", decompressedFilename)
+
+	// 解压文件
+	if err := compressionService.DecompressFile(filePath, decompressedPath); err != nil {
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Code:    500,
+			Message: "文件解压失败: " + err.Error(),
+		})
+		return
+	}
+
+	response := map[string]interface{}{
+		"decompressedUrl": config.BuildStaticURL(decompressedFilename),
+		"filename":        decompressedFilename,
+	}
+
+	c.JSON(http.StatusOK, models.APIResponse{
+		Code:    200,
+		Message: "解压成功",
 		Data:    response,
 	})
 }
@@ -236,7 +456,6 @@ func GetConversionHistory(c *gin.Context) {
 	}
 
 	var historyItems []models.ConversionHistoryItem
-	baseURL := "http://localhost:19988" // 可以从环境变量或配置文件读取
 
 	for _, file := range files {
 		if file.IsDir() {
@@ -265,7 +484,7 @@ func GetConversionHistory(c *gin.Context) {
 		historyItem := models.ConversionHistoryItem{
 			ID:        file.Name()[:len(file.Name())-4], // 去掉.gif后缀作为ID
 			Filename:  file.Name(),
-			GifURL:    fmt.Sprintf("%s/static/%s", baseURL, file.Name()),
+			GifURL:    config.BuildStaticURL(file.Name()),
 			FileSize:  fileSize,
 			CreatedAt: fileInfo.ModTime(),
 		}
@@ -327,9 +546,16 @@ func DeleteConversionHistory(c *gin.Context) {
 	})
 }
 
-// isVideoFile 检查是否为视频文件
+// isVideoFile 检查是否为视频文件（支持压缩格式）
 func isVideoFile(filename string) bool {
-	ext := strings.ToLower(getFileExtension(filename))
+	// 如果是压缩文件，先去掉压缩扩展名
+	originalFilename := filename
+	if strings.HasSuffix(strings.ToLower(filename), ".gz") {
+		originalFilename = strings.TrimSuffix(filename, ".gz")
+		originalFilename = strings.TrimSuffix(originalFilename, ".GZ")
+	}
+
+	ext := strings.ToLower(getFileExtension(originalFilename))
 	videoExts := []string{"mp4", "avi", "mov", "wmv", "flv", "webm", "mkv", "m4v"}
 
 	for _, videoExt := range videoExts {

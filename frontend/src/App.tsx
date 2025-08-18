@@ -14,6 +14,7 @@ import QrCodeGenerator from './pages/QrCodeGenerator';
 import MarkdownPreview from './pages/MarkdownPreview';
 import ColorTool from './pages/ColorTool';
 import PasswordGenerator from './pages/PasswordGenerator';
+import SystemMonitor from './pages/SystemMonitor';
 import NotImplemented from './pages/NotImplemented';
 import './App.css';
 
@@ -34,6 +35,7 @@ const App: React.FC = () => {
             <Route path="/tools/markdown-preview" element={<MarkdownPreview />} />
             <Route path="/tools/color-tool" element={<ColorTool />} />
             <Route path="/tools/password-generator" element={<PasswordGenerator />} />
+            <Route path="/tools/system-monitor" element={<SystemMonitor />} />
             <Route path="/tools/:toolId" element={<NotImplemented />} />
           </Routes>
         </Layout>

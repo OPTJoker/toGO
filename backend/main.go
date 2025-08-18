@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"toGif-backend/internal/config"
 	"toGif-backend/internal/handlers"
 	"toGif-backend/internal/middleware"
 
@@ -13,6 +14,9 @@ import (
 )
 
 func main() {
+	// 加载配置
+	cfg := config.LoadConfig()
+
 	// 设置Gin模式
 	gin.SetMode(gin.ReleaseMode)
 
@@ -35,12 +39,19 @@ func main() {
 	os.MkdirAll("./uploads", 0755)
 	os.MkdirAll("./output", 0755)
 
+	// 初始化清理服务
+	handlers.InitCleanupService("./uploads", "./output")
+
 	// 静态文件服务
 	r.Static("/static", "./output")
 
 	// API路由组
 	api := r.Group("/api")
 	{
+		// 系统监控路由
+		api.GET("/health", handlers.HealthCheck)
+		api.POST("/cleanup", handlers.ForceCleanup)
+
 		// 视频处理相关路由
 		video := api.Group("/video")
 		{
@@ -49,8 +60,15 @@ func main() {
 			video.DELETE("/history/:id", handlers.DeleteConversionHistory)
 		}
 
-		// 健康检查
-		api.GET("/health", func(c *gin.Context) {
+		// 文件压缩相关路由
+		compress := api.Group("/compress")
+		{
+			compress.POST("/file/:filename", handlers.CompressFile)
+			compress.POST("/decompress/:filename", handlers.DecompressFile)
+		}
+
+		// 旧的健康检查保持兼容性
+		api.GET("/health-simple", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{
 				"status":  "ok",
 				"message": "Service is running",
@@ -59,13 +77,12 @@ func main() {
 	}
 
 	// 启动服务器
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "19988"
-	}
+	log.Printf("Server starting on port %s", cfg.ServerPort)
+	log.Printf("Base URL: %s", cfg.BaseURL)
+	log.Printf("Static URL: %s", cfg.StaticURL)
+	log.Printf("Environment: %s", cfg.Environment)
 
-	log.Printf("Server starting on port %s", port)
-	if err := r.Run(":" + port); err != nil {
+	if err := r.Run(":" + cfg.ServerPort); err != nil {
 		log.Fatal("Failed to start server: ", err)
 	}
 }
