@@ -94,14 +94,8 @@ EOF
 deploy_app() {
     echo "🐳 部署应用..."
     
-    # 克隆项目（如果不存在）
-    if [ ! -d "toGO" ]; then
-        git clone https://github.com/OPTJoker/toGO.git
-        cd toGO
-    else
-        cd toGO
-        git pull origin main
-    fi
+    # 更新项目代码
+    git pull origin main
     
     # 停止旧容器
     docker-compose down
