@@ -42,15 +42,48 @@ DOCKEREOF
     echo -e "${GREEN}✅ Docker镜像加速配置完成${NC}"
 }
 
-# 预拉取镜像
+# 尝试多个镜像源
 pull_images() {
-    echo "📦 预拉取镜像..."
+    echo "📦 尝试拉取镜像..."
     
-    # 使用官方镜像，通过镜像加速器下载
-    docker pull golang:1.21-alpine || echo "跳过golang镜像"
-    docker pull alpine:latest || echo "跳过alpine镜像"
-    docker pull node:18-alpine || echo "跳过node镜像"
-    docker pull nginx:alpine || echo "跳过nginx镜像"
+    # 镜像源列表
+    declare -a SOURCES=(
+        ""  # 默认源（通过加速器）
+        "docker.mirrors.ustc.edu.cn/"
+        "hub-mirror.c.163.com/"
+        "mirror.baidubce.com/"
+    )
+    
+    declare -a IMAGES=(
+        "golang:1.21-alpine"
+        "alpine:latest" 
+        "node:18-alpine"
+        "nginx:alpine"
+    )
+    
+    for image in "${IMAGES[@]}"; do
+        echo "尝试拉取 $image..."
+        pulled=false
+        
+        for source in "${SOURCES[@]}"; do
+            full_image="${source}${image}"
+            echo "  尝试源: $full_image"
+            
+            if timeout 60 docker pull "$full_image" 2>/dev/null; then
+                if [ "$source" != "" ]; then
+                    docker tag "$full_image" "$image"
+                    docker rmi "$full_image" 2>/dev/null || true
+                fi
+                echo "  ✅ 成功拉取 $image"
+                pulled=true
+                break
+            fi
+        done
+        
+        if [ "$pulled" = false ]; then
+            echo "  ⚠️ 跳过 $image"
+        fi
+    done
     
     echo -e "${GREEN}✅ 镜像拉取尝试完成${NC}"
 }
