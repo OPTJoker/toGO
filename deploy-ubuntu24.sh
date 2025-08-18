@@ -42,7 +42,7 @@ install_go() {
     if ! grep -q "/usr/local/go/bin" ~/.bashrc; then
         echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
         echo 'export GOROOT=/usr/local/go' >> ~/.bashrc
-        echo 'export GOPROXY=https://goproxy.cn,direct' >> ~/.bashrc
+        echo 'export GOPROXY=https://goproxy.cn,http://artifactory.intra.ke.com/artifactory/api/go/go-local-repository,direct' >> ~/.bashrc
     fi
     
     export PATH=$PATH:/usr/local/go/bin
@@ -124,8 +124,8 @@ build_backend() {
     echo "使用Go: $($GO_CMD version)"
     
     # 设置Go代理
-    export GOPROXY=https://goproxy.cn,direct
-    export GOSUMDB=off
+    export GOPROXY=https://goproxy.cn,http://artifactory.intra.ke.com/artifactory/api/go/go-local-repository,direct
+    # export GOSUMDB=off
     
     # 构建
     $GO_CMD mod tidy
