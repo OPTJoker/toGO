@@ -13,7 +13,7 @@ export const tools: Tool[] = [
   {
     id: 'video-to-gif',
     name: '视频转GIF',
-    description: '将视频文件转换为GIF动图，支持自定义参数',
+    description: '将视频文件转换为GIF动图',
     category: categories[0],
     icon: 'VideoCameraOutlined',
     path: '/tools/video-to-gif',
@@ -41,8 +41,8 @@ export const tools: Tool[] = [
   // 开发工具类
   {
     id: 'json-formatter',
-    name: 'JSON格式化',
-    description: '美化和压缩JSON数据，支持语法高亮',
+    name: 'JSON工具',
+    description: 'JSON校验、格式化',
     category: categories[1],
     icon: 'CodeOutlined',
     path: '/tools/json-formatter',

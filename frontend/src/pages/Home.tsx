@@ -1,14 +1,14 @@
 import React from 'react';
-import { Card, Typography, Tag, Space } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { Card, Typography, Space } from 'antd';
+import Header from '../components/Header';
 import * as Icons from '@ant-design/icons';
 import { tools, categories } from '../data/tools';
 import type { Tool } from '../types';
+import homeBgBanner from '../assets/home-bg-banner.jpg';
 
 const { Title, Paragraph } = Typography;
 
 const Home: React.FC = () => {
-  const navigate = useNavigate();
 
   const handleToolClick = (tool: Tool) => {
     if (tool.implemented) {
@@ -101,16 +101,6 @@ const Home: React.FC = () => {
                         fontWeight: '600'
                       }}>
                         {tool.name}
-                        {tool.implemented && (
-                          <Tag color="green" style={{ 
-                            marginLeft: '8px', 
-                            fontSize: '10px',
-                            borderRadius: '12px',
-                            border: 'none'
-                          }}>
-                            已实现
-                          </Tag>
-                        )}
                       </Title>
                       <Paragraph 
                         style={{ 
@@ -147,51 +137,30 @@ const Home: React.FC = () => {
       margin: 0,
       boxSizing: 'border-box',
       overflowY: 'auto',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     }}>
       {/* 顶部紫色标题栏区域，仅此处加背景图 */}
       <div style={{
         width: '100%',
-        height: '180px',
         minHeight: '120px',
         position: 'relative',
-        background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #ffdde1 100%)', // 马卡龙暖色调
         overflow: 'hidden',
         boxSizing: 'border-box',
       }}>
-        {/* 仅标题栏加背景图片 */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          zIndex: 1,
-          backgroundImage: 'url(https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1500&q=80)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          opacity: 0.22,
-          pointerEvents: 'none',
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 1,
+            backgroundImage: 'url(' + homeBgBanner + ')',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            opacity: 0.99,
+            pointerEvents: 'none',
         }} />
-        {/* 左对齐且垂直1/4高度的主标题 */}
-        <div style={{
-          position: 'absolute',
-          left: '40px',
-          top: '0px',
-          zIndex: 2,
-          textAlign: 'left',
-        }}>
-          <Title level={1} style={{
-            color: 'white',
-            fontSize: '48px',
-            fontWeight: 'bold',
-            // marginTop: 0,
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-            textAlign: 'left',
-          }}>
-            toGO
-          </Title>
-        </div>
+
+        <Header />
       </div>
       
       {/* 工具展示区域 */}
