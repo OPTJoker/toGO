@@ -80,7 +80,7 @@ install_nodejs() {
     fi
 }
 
-# 第三步：安装其他依赖
+# 第三步：安装其他依赖和数据库
 install_other_deps() {
     echo "📦 安装其他依赖..."
     
@@ -97,7 +97,26 @@ install_other_deps() {
         sudo apt install -y ffmpeg
         echo "FFmpeg已安装"
     fi
-    
+
+    # 安装MySQL
+    if ! command -v mysql &> /dev/null; then
+        echo "📦 安装MySQL..."
+        sudo apt install -y mysql-server
+        sudo systemctl enable mysql
+        sudo systemctl start mysql
+        echo "MySQL已安装并启动"
+    fi
+
+    # 创建数据库 toGO（如果不存在）
+    echo "🔧 检查并创建数据库 toGO..."
+    DB_EXISTS=$(sudo mysql -uroot -e "SHOW DATABASES LIKE 'toGO';" | grep toGO || true)
+    if [ -z "$DB_EXISTS" ]; then
+        sudo mysql -uroot -e "CREATE DATABASE toGO DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+        echo "✅ 数据库 toGO 已创建"
+    else
+        echo "数据库 toGO 已存在"
+    fi
+
     echo -e "${GREEN}✅ 所有依赖安装完成${NC}"
 }
 
