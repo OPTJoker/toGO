@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Card, 
   Upload, 
@@ -13,21 +13,18 @@ import {
   Progress,
   Image,
   Divider,
-  List,
-  message,
-  Modal
+  message
 } from 'antd';
 import { 
   InboxOutlined, 
   PlayCircleOutlined, 
   DownloadOutlined,
-  DeleteOutlined,
   CompressOutlined,
   InfoCircleOutlined
 } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
 import { videoToGifApi } from '../api';
-import type { VideoToGifRequest, ConversionHistoryItem } from '../types';
+import type { VideoToGifRequest } from '../types';
 import { ClientCompressionService } from '../utils/compression';
 import { buildStaticUrl } from '../config';
 
@@ -56,57 +53,10 @@ const VideoToGif: React.FC = () => {
     zipSize?: number;
     compressionRatio?: number;
   } | null>(null);
-  const [historyList, setHistoryList] = useState<ConversionHistoryItem[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
-  const [currentPageSize, setCurrentPageSize] = useState(20);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  
   const [uploadProgress, setUploadProgress] = useState(0); // 上传进度
   const [isUploading, setIsUploading] = useState(false); // 上传状态
-  const [itemToDelete, setItemToDelete] = useState<ConversionHistoryItem | null>(null);  // 要删除的项目
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  // 加载历史记录
-  const loadHistory = async () => {
-    try {
-      setLoadingHistory(true);
-      const history = await videoToGifApi.getHistory();
-      // 确保返回的是数组，提供健壮性
-      if (Array.isArray(history)) {
-        setHistoryList(history);
-      } else {
-        console.warn('API返回的历史记录不是数组格式:', history);
-        setHistoryList([]);
-      }
-    } catch (error) {
-      console.error('获取历史记录失败:', error);
-      // 发生错误时设置为空数组，避免页面崩溃
-      setHistoryList([]);
-      // 只在不是网络连接问题时显示错误提示
-      if (error && typeof error === 'object' && 'code' in error && error.code !== 'NETWORK_ERROR') {
-        message.error('获取历史记录失败');
-      }
-    } finally {
-      setLoadingHistory(false);
-    }
-  };
-
-  // 组件加载时获取历史记录
-  useEffect(() => {
-    loadHistory();
-  }, []);
-
-  // 删除历史记录
-  const handleDeleteHistory = async (item: ConversionHistoryItem) => {
-    try {
-      await videoToGifApi.deleteHistory(item.id);
-      message.success('删除成功');
-      // 重新加载历史记录
-      loadHistory();
-    } catch (error) {
-      console.error('删除失败:', error);
-      message.error('删除失败');
-    }
-  };
 
   const uploadProps: UploadProps = {
     name: 'video',
@@ -234,8 +184,6 @@ const VideoToGif: React.FC = () => {
         compressionRatio: result.compressionRatio,
       });
       
-      // 转换成功后刷新历史记录
-      loadHistory();
       message.success('转换成功！');
     } catch (error: any) {
       console.error('转换失败:', error);
@@ -592,190 +540,7 @@ const VideoToGif: React.FC = () => {
           )}
         </Col>
       </Row>
-
-      {/* 转换历史记录 */}
-      <Row style={{ marginTop: '24px' }}>
-        <Col span={24}>
-          <Card 
-            title="转换历史" 
-            extra={
-              <Button 
-                onClick={loadHistory} 
-                loading={loadingHistory}
-                size="small"
-              >
-                刷新
-              </Button>
-            }
-          >
-            <List
-              loading={loadingHistory}
-              dataSource={historyList || []}  // 确保始终是数组
-              locale={{ emptyText: '暂无转换记录' }}
-              renderItem={(item) => (
-                <List.Item
-                  style={{
-                    cursor: 'pointer',
-                    transition: 'background-color 0.3s ease',
-                    borderRadius: '8px',
-                    margin: '4px 0',
-                    padding: '12px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f5f5f5';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                  actions={[
-                    <Button 
-                      key="download"
-                      type="link" 
-                      icon={<DownloadOutlined />}
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        try {
-                          // 使用配置工具构建完整的下载URL
-                          const downloadUrl = buildStaticUrl(item.gifUrl);
-                            
-                          // 使用fetch获取二进制数据，强制下载
-                          const response = await fetch(downloadUrl, {
-                            method: 'GET',
-                            headers: {
-                              'Content-Type': 'application/octet-stream',
-                            },
-                          });
-                          
-                          if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                          }
-                          
-                          const blob = await response.blob();
-                          
-                          // 创建下载链接
-                          const url = window.URL.createObjectURL(blob);
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = item.filename;
-                          link.style.display = 'none';
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          
-                          // 清理URL对象
-                          window.URL.revokeObjectURL(url);
-                          
-                          message.success('下载成功');
-                        } catch (error) {
-                          console.error('下载失败:', error);
-                          message.error('下载失败，请重试');
-                        }
-                      }}
-                    >
-                      下载
-                    </Button>,
-                    <Button 
-                      key="preview"
-                      type="link"
-                      onClick={() => {
-                        // 直接在新窗口打开预览
-                        window.open(item.gifUrl, '_blank');
-                      }}
-                    >
-                      预览
-                    </Button>,
-                    <Button 
-                      key="delete"
-                      type="link" 
-                      danger
-                      icon={<DeleteOutlined />}
-                      onClick={() => {
-                        // 设置要删除的项目并显示确认弹窗
-                        setItemToDelete(item);
-                        setDeleteModalVisible(true);
-                      }}
-                    >
-                      删除
-                    </Button>
-                  ]}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <Image
-                        width={60}
-                        height={60}
-                        src={item.gifUrl}
-                        style={{ borderRadius: '4px' }}
-                        preview={false}
-                      />
-                    }
-                    title={
-                      <Space>
-                        <span>{item.filename}</span>
-                        <span style={{ fontSize: '12px', color: '#999' }}>
-                          {formatFileSize(item.fileSize)}
-                        </span>
-                      </Space>
-                    }
-                    description={
-                      <span style={{ fontSize: '12px', color: '#666' }}>
-                        {new Date(item.createdAt).toLocaleString('zh-CN')}
-                      </span>
-                    }
-                  />
-                </List.Item>
-              )}
-              pagination={historyList && historyList.length > 0 ? {
-                pageSize: currentPageSize,  // 使用状态中的页面大小
-                size: 'small',
-                showSizeChanger: true,  // 允许用户改变页面大小
-                pageSizeOptions: ['10', '20', '50', '100'],  // 页面大小选项
-                showQuickJumper: true,  // 显示快速跳转
-                onShowSizeChange: (_, size) => {
-                  setCurrentPageSize(size);  // 当用户改变页面大小时更新状态
-                },
-                showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条记录`
-              } : false}
-            />
-          </Card>
-        </Col>
-      </Row>
       </div>
-
-      {/* 删除确认弹窗 */}
-      <Modal
-        title="确认删除"
-        open={deleteModalVisible}
-        onOk={() => {
-          if (itemToDelete) {
-            handleDeleteHistory(itemToDelete);
-            setDeleteModalVisible(false);
-            setItemToDelete(null);
-          }
-        }}
-        onCancel={() => {
-          setDeleteModalVisible(false);
-          setItemToDelete(null);
-        }}
-        okText="确定删除"
-        cancelText="取消"
-        okButtonProps={{ danger: true }}
-        width={400}
-        centered
-        style={{ top: 20 }}
-      >
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <DeleteOutlined style={{ fontSize: '48px', color: '#ff4d4f', marginBottom: '16px' }} />
-          <p style={{ fontSize: '16px', marginBottom: '8px' }}>确定要删除这个GIF文件吗？</p>
-          <p style={{ fontSize: '14px', color: '#666', marginBottom: '0' }}>此操作不可恢复</p>
-          {itemToDelete && (
-            <p style={{ fontSize: '14px', color: '#999', marginTop: '16px' }}>
-              文件名：{itemToDelete.filename}
-            </p>
-          )}
-        </div>
-      </Modal>
     </div>
   );
 };

@@ -55,12 +55,3 @@ export interface DecompressionResponse {
   decompressedUrl: string;
   filename: string;
 }
-
-// 转换历史记录类型
-export interface ConversionHistoryItem {
-  id: string;
-  filename: string;
-  gifUrl: string;
-  fileSize: number;
-  createdAt: string;
-}
