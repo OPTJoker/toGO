@@ -355,8 +355,8 @@ const VideoToGif: React.FC = () => {
               </p>
               <p className="ant-upload-text">点击或拖拽视频文件到此区域上传</p>
               <div className="ant-upload-hint">
-                <p style={{ margin: '4px 0' }}>支持上传MP4、AVI、MOV等常见视频格式</p>
-                <p style={{ margin: '4px 0' }}>文件大小限制为50MB（适配服务器带宽）</p>
+                <p style={{ margin: '4px 0' }}>支持格式：MP4、AVI、MOV等常见格式</p>
+                <p style={{ margin: '4px 0' }}>文件大小：50MB以内</p>
                 <p style={{ margin: '4px 0', color: '#1890ff' }}>
                   <CompressOutlined /> ≥8MB的文件：上传时自动压缩，生成的GIF≥8MB时提供ZIP下载
                 </p>

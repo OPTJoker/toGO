@@ -12,9 +12,9 @@ const Home: React.FC = () => {
 
   const handleToolClick = (tool: Tool) => {
     if (tool.implemented) {
-      navigate(tool.path);
+      window.open(tool.path, '_blank');
     } else {
-      navigate(`/tools/${tool.id}`);
+      window.open(`/tools/${tool.id}`, '_blank');
     }
   };
 
