@@ -3,7 +3,6 @@ import type {
   ApiResponse, 
   VideoToGifRequest, 
   VideoToGifResponse, 
-  ConversionHistoryItem,
   CompressionResponse,
   DecompressionResponse
 } from '../types';
@@ -49,29 +48,6 @@ export const videoToGifApi = {
     });
 
     return response.data;
-  },
-
-  // 获取转换历史记录
-  getHistory: async (): Promise<ConversionHistoryItem[]> => {
-    try {
-      const response: ApiResponse<ConversionHistoryItem[]> = await api.get('/video/history');
-      // 确保返回数组，提供健壮性
-      if (response.data && Array.isArray(response.data)) {
-        return response.data;
-      } else {
-        console.warn('API返回的历史记录格式异常:', response.data);
-        return [];
-      }
-    } catch (error) {
-      console.error('获取历史记录API调用失败:', error);
-      // 返回空数组而不是抛出错误，避免页面崩溃
-      return [];
-    }
-  },
-
-  // 删除转换历史记录
-  deleteHistory: async (id: string): Promise<void> => {
-    await api.delete(`/video/history/${id}`);
   },
 };
 
