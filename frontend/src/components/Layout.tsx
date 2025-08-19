@@ -20,7 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   // 获取上个页面的标题（导航逻辑：显示来源页面标题）
   const getParentPageTitle = () => {
     // 所有工具页面都是从首页进入的，所以显示首页标题
-    return '开发者工具箱';
+    return '首页';
   };
 
   return (
@@ -31,14 +31,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       overflowX: 'hidden'
     }}>
       {isSubPage && (
-        <Header style={{ 
-          position: 'fixed', 
+        <Header style={{
+          position: 'fixed',
           top: 0,
           left: 0,
-          zIndex: 1001, 
+          zIndex: 1001,
           width: '100%',
           height: '64px',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #ffdde1 100%)', // 马卡龙暖色调
           boxShadow: '0 2px 16px rgba(0,0,0,0.2)',
           padding: '0 16px',
           display: 'flex',
@@ -50,29 +50,36 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div
               onClick={() => navigate('/')}
-              style={{ 
-                color: 'white',
-                fontSize: '16px',
+              style={{
+                color: '#ff7e5f', // 马卡龙橙色
+                fontSize: '18px',
                 height: '40px',
                 borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                padding: '0 12px',
+                padding: '0 16px',
                 cursor: 'pointer',
-                transition: 'background-color 0.2s',
-                background: 'rgba(255, 255, 255, 0.1)'
+                transition: 'background 0.2s, color 0.2s',
+                background: 'transparent',
+                boxShadow: '0 2px 8px rgba(252,182,159,0.12)',
+                border: '1px solid #fcb69f',
+                fontWeight: 600,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
+                e.currentTarget.style.color = '#ff7e5f';
+                e.currentTarget.style.border = '1px solid #ff7e5f';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#ff7e5f';
+                e.currentTarget.style.border = '1px solid #fcb69f';
               }}
             >
-              <ArrowLeftOutlined />
-              <span>返回</span>
+              <ArrowLeftOutlined style={{ color: '#ff7e5f', fontSize: '20px' }} />
+              
             </div>
             <Title level={3} style={{ 
               margin: 0, 
@@ -81,7 +88,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               fontSize: '18px',
               textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
             }}>
-              {getParentPageTitle()}
+              {/* {getParentPageTitle()} */}
             </Title>
           </div>
         </Header>

@@ -139,43 +139,59 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div style={{ 
-      width: '100%', 
+    <div style={{
+      width: '100%',
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '0',
-      margin: '0',
+      position: 'relative',
+      padding: 0,
+      margin: 0,
       boxSizing: 'border-box',
-      overflowY: 'auto'
+      overflowY: 'auto',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     }}>
-      {/* 顶部标题区域 */}
-      <div style={{ 
-        textAlign: 'center', 
-        paddingTop: '40px',
-        paddingBottom: '40px',
-        paddingLeft: '16px',
-        paddingRight: '16px',
-        background: 'rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(10px)'
+      {/* 顶部紫色标题栏区域，仅此处加背景图 */}
+      <div style={{
+        width: '100%',
+        height: '180px',
+        minHeight: '120px',
+        position: 'relative',
+        background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #ffdde1 100%)', // 马卡龙暖色调
+        overflow: 'hidden',
+        boxSizing: 'border-box',
       }}>
-        <Title level={1} style={{ 
-          color: 'white', 
-          fontSize: '36px', 
-          fontWeight: 'bold',
-          marginBottom: '12px',
-          textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+        {/* 仅标题栏加背景图片 */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 1,
+          backgroundImage: 'url(https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1500&q=80)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.22,
+          pointerEvents: 'none',
+        }} />
+        {/* 左对齐且垂直1/4高度的主标题 */}
+        <div style={{
+          position: 'absolute',
+          left: '40px',
+          top: '0px',
+          zIndex: 2,
+          textAlign: 'left',
         }}>
-          开发者工具箱
-        </Title>
-        <Paragraph style={{ 
-          fontSize: '18px', 
-          color: 'rgba(255, 255, 255, 0.9)',
-          maxWidth: '600px',
-          margin: '0 auto',
-          textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-        }}>
-          为开发者精心打造的实用工具集合，提升您的工作效率
-        </Paragraph>
+          <Title level={1} style={{
+            color: 'white',
+            fontSize: '48px',
+            fontWeight: 'bold',
+            // marginTop: 0,
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+            textAlign: 'left',
+          }}>
+            toGO
+          </Title>
+        </div>
       </div>
       
       {/* 工具展示区域 */}
