@@ -18,10 +18,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isSubPage = location.pathname !== '/';
   
   // 获取上个页面的标题（导航逻辑：显示来源页面标题）
-  const getParentPageTitle = () => {
-    // 所有工具页面都是从首页进入的，所以显示首页标题
-    return '首页';
-  };
+  // const getParentPageTitle = () => {
+  //   // 所有工具页面都是从首页进入的，所以显示首页标题
+  //   return '首页';
+  // };
 
   return (
     <AntLayout style={{ 

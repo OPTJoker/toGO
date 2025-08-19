@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { dracula } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
-import { Card, Button, Space, Input, message, Row, Col, Typography, Select, Divider } from 'antd';
+import { Card, Button, Space, Input, message, Row, Col, Typography, Select } from 'antd';
 import { 
   FormatPainterOutlined, 
   CompressOutlined, 
@@ -73,22 +73,6 @@ const JsonFormatter: React.FC = () => {
     } catch (error) {
       message.error('JSON格式错误，请检查输入');
       console.error('JSON parse error:', error);
-    }
-  };
-
-  // 验证 JSON
-  const validateJson = () => {
-    try {
-      if (!inputJson.trim()) {
-        message.warning('请输入要验证的JSON数据');
-        return;
-      }
-      
-      JSON.parse(inputJson);
-      message.success('JSON格式正确');
-    } catch (error) {
-      message.error('JSON格式错误');
-      console.error('JSON validation error:', error);
     }
   };
 
