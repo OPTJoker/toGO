@@ -67,6 +67,13 @@ func main() {
 			compress.POST("/decompress/:filename", handlers.DecompressFile)
 		}
 
+		// 二维码生成相关路由
+		qrcode := api.Group("/qrcode")
+		{
+			qrcode.POST("/generate", handlers.GenerateQRCode)
+			qrcode.GET("/image", handlers.GetQRCodeImage)
+		}
+
 		// 旧的健康检查保持兼容性
 		api.GET("/health-simple", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{

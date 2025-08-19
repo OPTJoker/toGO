@@ -1,64 +1,60 @@
 import React, { useState } from 'react';
 import { Card, Input, Button, Space, Row, Col, Typography, Select, ColorPicker, message } from 'antd';
-import { DownloadOutlined, CopyOutlined } from '@ant-design/icons';
+import { DownloadOutlined } from '@ant-design/icons';
+import { qrcodeApi } from '../api';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 const QrCodeGenerator: React.FC = () => {
   const [text, setText] = useState('');
-  const [size, setSize] = useState(200);
-  const [level, setLevel] = useState('M');
+  const [size, setSize] = useState(256);
+  const [level, setLevel] = useState<'L' | 'M' | 'Q' | 'H'>('M');
   const [color, setColor] = useState('#000000');
   const [bgColor, setBgColor] = useState('#ffffff');
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // 生成二维码
   const generateQrCode = async () => {
     if (!text.trim()) {
-      message.warning('请输入要生成二维码的内容');
+      message.error('请输入要生成二维码的内容');
       return;
     }
 
+    setLoading(true);
+    
     try {
-      // 使用第三方API生成二维码
-      const params = new URLSearchParams({
-        data: text,
-        size: `${size}x${size}`,
-        color: color.replace('#', ''),
-        bgcolor: bgColor.replace('#', ''),
-        ecc: level,
-        format: 'png'
+      const response = await qrcodeApi.generateQRCode({
+        text: text.trim(),
+        size,
+        level,
+        color,
+        bgColor,
       });
-      
-      const url = `https://api.qrserver.com/v1/create-qr-code/?${params}`;
-      setQrCodeUrl(url);
-      message.success('二维码生成成功');
+
+      if (response.success && response.data) {
+        setQrCodeDataUrl(response.data);
+        message.success('二维码生成成功');
+      } else {
+        message.error(response.message || '生成二维码失败');
+      }
     } catch (error) {
       console.error('生成二维码失败:', error);
-      message.error('生成二维码失败');
+      message.error('生成二维码失败，请重试');
+    } finally {
+      setLoading(false);
     }
   };
 
   // 下载二维码
   const downloadQrCode = () => {
-    if (!qrCodeUrl) return;
+    if (!qrCodeDataUrl) return;
     
     const link = document.createElement('a');
-    link.href = qrCodeUrl;
+    link.href = qrCodeDataUrl;
     link.download = 'qrcode.png';
     link.click();
-  };
-
-  // 复制二维码链接
-  const copyQrCodeUrl = () => {
-    if (!qrCodeUrl) return;
-    
-    navigator.clipboard.writeText(qrCodeUrl).then(() => {
-      message.success('二维码链接已复制到剪贴板');
-    }).catch(() => {
-      message.error('复制失败');
-    });
   };
 
   return (
@@ -101,12 +97,11 @@ const QrCodeGenerator: React.FC = () => {
                       onChange={setSize}
                       style={{ width: '100%', marginTop: '8px' }}
                       options={[
-                        { label: '100x100', value: 100 },
-                        { label: '150x150', value: 150 },
-                        { label: '200x200', value: 200 },
-                        { label: '300x300', value: 300 },
-                        { label: '400x400', value: 400 },
-                        { label: '500x500', value: 500 }
+                        { label: '64x64', value: 64 },
+                        { label: '128x128', value: 128 },
+                        { label: '256x256', value: 256 },
+                        { label: '512x512', value: 512 },
+                        { label: '1024x1024', value: 1024 }
                       ]}
                     />
                   </Col>
@@ -154,10 +149,11 @@ const QrCodeGenerator: React.FC = () => {
                 <Button 
                   type="primary" 
                   onClick={generateQrCode}
+                  loading={loading}
                   size="large"
                   style={{ width: '100%' }}
                 >
-                  生成二维码
+                  {loading ? '生成中...' : '生成二维码'}
                 </Button>
               </Space>
             </Card>
@@ -166,37 +162,36 @@ const QrCodeGenerator: React.FC = () => {
           <Col xs={24} lg={12}>
             <Card 
               title="生成结果"
-              extra={qrCodeUrl && (
-                <Space>
-                  <Button 
-                    icon={<CopyOutlined />}
-                    onClick={copyQrCodeUrl}
-                    size="small"
-                  >
-                    复制链接
-                  </Button>
-                  <Button 
-                    type="primary"
-                    icon={<DownloadOutlined />}
-                    onClick={downloadQrCode}
-                    size="small"
-                  >
-                    下载
-                  </Button>
-                </Space>
+              extra={qrCodeDataUrl && (
+                <Button 
+                  type="primary"
+                  icon={<DownloadOutlined />}
+                  onClick={downloadQrCode}
+                  size="small"
+                >
+                  下载
+                </Button>
               )}
             >
               <div style={{ textAlign: 'center', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {qrCodeUrl ? (
+                {qrCodeDataUrl ? (
                   <div>
                     <img 
-                      src={qrCodeUrl} 
+                      src={qrCodeDataUrl} 
                       alt="Generated QR Code"
                       style={{ 
                         maxWidth: '100%', 
                         maxHeight: '400px',
                         border: '1px solid #d9d9d9',
                         borderRadius: '8px'
+                      }}
+                      onError={() => {
+                        console.error('二维码图片加载失败');
+                        message.error('二维码图片加载失败，请重新生成');
+                        setQrCodeDataUrl('');
+                      }}
+                      onLoad={() => {
+                        console.log('二维码图片加载成功');
                       }}
                     />
                     <div style={{ marginTop: '16px' }}>

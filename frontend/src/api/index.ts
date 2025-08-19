@@ -90,4 +90,32 @@ export const compressionApi = {
   },
 };
 
+// 二维码生成 API
+export const qrcodeApi = {
+  // 生成二维码（POST方式，返回base64数据）
+  generateQRCode: async (request: {
+    text: string;
+    size?: number;
+    level?: string;
+    color?: string;
+    bgColor?: string;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    data?: string;
+  }> => {
+    return await api.post('/qrcode/generate', request);
+  },
+
+  // 获取二维码图片URL（GET方式）
+  getQRCodeImageUrl: (text: string, size?: number, level?: string): string => {
+    const params = new URLSearchParams({
+      text,
+      ...(size && { size: size.toString() }),
+      ...(level && { level }),
+    });
+    return `${API_CONFIG.BASE_URL}/qrcode/image?${params.toString()}`;
+  },
+};
+
 export default api;

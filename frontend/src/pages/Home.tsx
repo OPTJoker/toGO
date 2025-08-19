@@ -40,44 +40,46 @@ const Home: React.FC = () => {
           <div className="tools-grid">
             {categoryTools.map(tool => (
               <div key={tool.id}>
-                <Card
-                  hoverable
-                  style={{ 
-                    height: '200px',
-                    cursor: tool.implemented ? 'pointer' : 'not-allowed',
-                    opacity: tool.implemented ? 1 : 0.7,
-                    border: 'none',
-                    borderRadius: '16px',
-                    boxShadow: tool.implemented 
-                      ? '0 8px 24px rgba(0,0,0,0.12)' 
-                      : '0 4px 12px rgba(0,0,0,0.08)',
-                    background: tool.implemented 
-                      ? 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-                      : '#f8f9fa',
-                    transition: 'all 0.3s ease',
-                    transform: tool.implemented ? 'translateY(0)' : 'none'
-                  }}
-                  onClick={() => handleToolClick(tool)}
-                  bodyStyle={{ 
-                    padding: '24px', 
-                    height: '100%', 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    background: 'transparent'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (tool.implemented) {
-                      e.currentTarget.style.transform = 'translateY(-4px)';
-                      e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.15)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (tool.implemented) {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
-                    }
-                  }}
-                >
+                  <Card
+                    hoverable
+                    style={{ 
+                      height: '200px',
+                      cursor: tool.implemented ? 'pointer' : 'not-allowed',
+                      opacity: tool.implemented ? 1 : 0.7,
+                      border: 'none',
+                      borderRadius: '16px',
+                      boxShadow: tool.implemented 
+                        ? '0 8px 24px rgba(0,0,0,0.12)' 
+                        : '0 4px 12px rgba(0,0,0,0.08)',
+                      background: tool.implemented 
+                        ? 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                        : '#f8f9fa',
+                      transition: 'all 0.3s ease',
+                      transform: tool.implemented ? 'translateY(0)' : 'none'
+                    }}
+                    onClick={() => handleToolClick(tool)}
+                    styles={{
+                      body: {
+                        padding: '24px', 
+                        height: '100%', 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        background: 'transparent'
+                      }
+                    }}
+                    onMouseEnter={(e) => {
+                      if (tool.implemented) {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.15)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (tool.implemented) {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
+                      }
+                    }}
+                  >
                   <Space direction="vertical" style={{ width: '100%', height: '100%', textAlign: 'center' }}>
                     <div style={{ 
                       background: `linear-gradient(135deg, ${tool.category.color}20, ${tool.category.color}10)`,
