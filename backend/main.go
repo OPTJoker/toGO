@@ -8,6 +8,7 @@ import (
 	"toGif-backend/internal/config"
 	"toGif-backend/internal/handlers"
 	"toGif-backend/internal/middleware"
+	"toGif-backend/internal/models"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -44,6 +45,12 @@ func main() {
 
 	// 静态文件服务
 	r.Static("/static", "./output")
+	r.GET("/", gin.HandlerFunc(func(c *gin.Context) {
+		c.JSON(http.StatusOK, models.APIResponse{
+			Code:    200,
+			Message: "Hi 🐕",
+		})
+	}))
 
 	// API路由组
 	api := r.Group("/api")

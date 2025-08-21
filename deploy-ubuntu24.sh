@@ -333,7 +333,7 @@ main() {
     verify_deployment
     
     # 设置管理脚本权限
-    chmod +x manage.sh 2>/dev/null || echo "manage.sh不存在，稍后创建"
+    chmod +x manage-ubuntu.sh 2>/dev/null || echo "manage-ubuntu.sh不存在，稍后创建"
     
     echo ""
     echo -e "${GREEN}🎉 部署完成！${NC}"
