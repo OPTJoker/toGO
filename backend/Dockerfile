@@ -1,5 +1,5 @@
-# 使用阿里云Go镜像作为构建环境
-FROM registry.cn-hangzhou.aliyuncs.com/dockerhub-mirror/golang:1.21-alpine AS builder
+# 使用官方Go镜像作为构建环境
+FROM golang:1.21-alpine AS builder
 
 # 安装FFmpeg
 RUN apk add --no-cache ffmpeg
