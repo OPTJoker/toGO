@@ -134,61 +134,60 @@ cd toGO
 ```
 
 #### 3. 启动后端服务
-```bash
-# 进入后端目录
-cd backend
 
-# 安装Go依赖
-go mod tidy
-
-# 启动开发服务器
-go run main.go
-
-# 服务将在 http://localhost:8080 启动
-```
-
-#### 4. 启动前端服务
-```bash
-# 新开终端，进入前端目录
-cd frontend
-
-# 安装npm依赖
-npm install
-
-# 启动开发服务器
-npm run dev
-
-# 前端将在 http://localhost:5173 启动
-```
-
-#### 5. 访问应用
-打开浏览器访问 `http://localhost:5173` 即可使用应用。
-
-### 🐳 Docker部署
-
-#### 一键部署（推荐）
+#### 一键 Docker + Nginx 部署（推荐生产环境）
 ```bash
 # 克隆项目
 git clone https://github.com/OPTJoker/toGO.git
 cd toGO
 
-# 构建并启动所有服务
-docker-compose up --build
-
-# 后台运行
-docker-compose up -d --build
+# 构建并启动所有服务（后端、前端、Nginx）
+./docker-deploy.sh
+# 或
+docker-compose build
+docker-compose up -d
+```
 
 # 查看服务状态
 docker-compose ps
 
-# 查看日志
+# 查看日志（所有服务）
 docker-compose logs -f
+
+# 查看单个服务日志
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f nginx
+
+# 查看后端健康状态
+docker exec togo-backend curl -f http://localhost:8080/api/health
+
+# 查看后端容器资源占用
+docker stats togo-backend
+
+#### 持久化与配置管理
+- 后端 uploads、output、logs 目录已挂载主机卷，数据安全不丢失。
+- 后端环境变量统一用 backend/.env 文件管理。
+- Nginx 日志挂载到主机 ./nginx/logs 目录，便于排查。
+
+#### 停止和清理
+```bash
+# 停止所有服务
+docker-compose down
+
+# 停止并删除所有数据卷
+docker-compose down -v
+
+# 清理所有镜像
+docker-compose down --rmi all
 ```
 
-#### 分别构建
-```bash
-# 构建后端镜像
-cd backend
+#### 专业运维建议
+- 推荐生产环境使用自定义 bridge 网络，服务间安全隔离。
+- 后端服务已配置健康检查，自动检测存活。
+- 所有敏感配置建议用 .env 文件统一管理。
+- 日志建议挂载主机或集中收集。
+- 可结合 CI/CD 自动化构建和部署。
 docker build -t togo-backend .
 
 # 构建前端镜像
