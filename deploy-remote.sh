@@ -7,7 +7,7 @@ set -e
 # 项目配置
 PROJECT_NAME=togo
 REMOTE_HOST=101.126.6.243
-MYSQL_DB_NAME=togo_stats
+MYSQL_DB_NAME=toGO
 
 echo "🚀 开始部署 toGO 到远端主机 ${REMOTE_HOST}..."
 

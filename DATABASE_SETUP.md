@@ -47,7 +47,7 @@ mysql -u root -p < backend/init_database.sql
 #### 方法三：手动创建
 登录MySQL后手动执行：
 ```sql
-CREATE DATABASE IF NOT EXISTS togo_stats CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS toGO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ### 3. 配置环境变量
@@ -59,7 +59,7 @@ DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_mysql_password
-DB_NAME=togo_stats
+DB_NAME=toGO
 ```
 
 #### 生产环境
@@ -69,7 +69,7 @@ DB_HOST=your_production_host
 DB_PORT=3306
 DB_USER=your_production_user
 DB_PASSWORD=your_production_password
-DB_NAME=togo_stats
+DB_NAME=toGO
 ```
 
 ### 4. 数据库表结构
@@ -105,7 +105,7 @@ DB_NAME=togo_stats
 
 ```sql
 CREATE USER 'togo_user'@'localhost' IDENTIFIED BY 'secure_password';
-GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX ON togo_stats.* TO 'togo_user'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX ON toGO.* TO 'togo_user'@'localhost';
 FLUSH PRIVILEGES;
 ```
 

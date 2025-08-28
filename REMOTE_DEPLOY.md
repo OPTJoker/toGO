@@ -26,7 +26,7 @@ sudo systemctl enable mysql
 创建数据库（可选，部署脚本会自动创建）：
 ```bash
 mysql -u root -p
-CREATE DATABASE IF NOT EXISTS togo_stats CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS toGO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 exit;
 ```
 

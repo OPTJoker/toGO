@@ -1,8 +1,8 @@
 -- 创建数据库
-CREATE DATABASE IF NOT EXISTS togo_stats CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS toGO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 使用数据库
-USE togo_stats;
+USE toGO;
 
 -- 创建访问记录表（GORM会自动创建，这里仅作参考）
 -- CREATE TABLE IF NOT EXISTS visitor_records (
