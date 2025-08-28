@@ -2,7 +2,7 @@
 FROM golang:1.21-alpine AS builder
 
 # 安装FFmpeg
-RUN apk add --no-cache ffmpeg
+# RUN apk add --no-cache ffmpeg
 
 # 设置工作目录
 WORKDIR /app
@@ -23,7 +23,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 FROM alpine:latest
 
 # 安装FFmpeg和必要的工具
-RUN apk --no-cache add ffmpeg ca-certificates
+# RUN apk --no-cache add ffmpeg ca-certificates
 
 # 设置工作目录
 WORKDIR /root/
