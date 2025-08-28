@@ -36,3 +36,16 @@ type ConversionHistoryItem struct {
 	FileSize  int64     `json:"fileSize"`
 	CreatedAt time.Time `json:"createdAt"`
 }
+
+// VisitorStats 访问统计
+type VisitorStats struct {
+	TodayVisitors int    `json:"todayVisitors"`
+	Date          string `json:"date"`
+}
+
+// VisitorRecord 访问记录
+type VisitorRecord struct {
+	IP        string    `json:"ip"`
+	UserAgent string    `json:"userAgent"`
+	Timestamp time.Time `json:"timestamp"`
+}

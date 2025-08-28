@@ -11,6 +11,12 @@ type AppConfig struct {
 	BaseURL     string
 	StaticURL   string
 	Environment string
+	// 数据库配置
+	DBHost     string
+	DBPort     string
+	DBUser     string
+	DBPassword string
+	DBName     string
 }
 
 var Config *AppConfig
@@ -46,6 +52,12 @@ func LoadConfig() *AppConfig {
 		BaseURL:     baseURL,
 		StaticURL:   staticURL,
 		Environment: getEnv("ENVIRONMENT", "development"),
+		// 数据库配置
+		DBHost:     getEnv("DB_HOST", "localhost"),
+		DBPort:     getEnv("DB_PORT", "3306"),
+		DBUser:     getEnv("DB_USER", "root"),
+		DBPassword: getEnv("DB_PASSWORD", ""),
+		DBName:     getEnv("DB_NAME", "togo_stats"),
 	}
 
 	return Config

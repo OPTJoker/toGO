@@ -4,7 +4,8 @@ import type {
   VideoToGifRequest, 
   VideoToGifResponse, 
   CompressionResponse,
-  DecompressionResponse
+  DecompressionResponse,
+  VisitorStats
 } from '../types';
 import { API_CONFIG } from '../config';
 
@@ -91,6 +92,26 @@ export const qrcodeApi = {
       ...(level && { level }),
     });
     return `${API_CONFIG.BASE_URL}/qrcode/image?${params.toString()}`;
+  },
+};
+
+// 访问统计 API
+export const statsApi = {
+  // 记录访问者
+  recordVisitor: async (): Promise<void> => {
+    await api.post('/stats/record');
+  },
+
+  // 获取访问统计
+  getVisitorStats: async (): Promise<VisitorStats> => {
+    const response: ApiResponse<VisitorStats> = await api.get('/stats/visitors');
+    return response.data;
+  },
+
+  // 获取总访问人数
+  getTotalVisitors: async (): Promise<number> => {
+    const response: ApiResponse<{totalVisitors: number}> = await api.get('/stats/total');
+    return response.data.totalVisitors;
   },
 };
 

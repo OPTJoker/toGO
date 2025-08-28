@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"toGif-backend/internal/config"
+	"toGif-backend/internal/database"
 	"toGif-backend/internal/handlers"
 	"toGif-backend/internal/middleware"
 	"toGif-backend/internal/models"
@@ -17,6 +18,12 @@ import (
 func main() {
 	// 加载配置
 	cfg := config.LoadConfig()
+
+	// 初始化数据库
+	if err := database.InitDatabase(); err != nil {
+		log.Printf("Database initialization failed: %v", err)
+		log.Println("Continuing without database (stats features will be disabled)")
+	}
 
 	// 设置Gin模式
 	gin.SetMode(gin.ReleaseMode)
@@ -79,6 +86,14 @@ func main() {
 		{
 			qrcode.POST("/generate", handlers.GenerateQRCode)
 			qrcode.GET("/image", handlers.GetQRCodeImage)
+		}
+
+		// 访问统计相关路由
+		stats := api.Group("/stats")
+		{
+			stats.POST("/record", handlers.RecordVisitor)
+			stats.GET("/visitors", handlers.GetVisitorStats)
+			stats.GET("/total", handlers.GetTotalVisitors)
 		}
 
 		// 旧的健康检查保持兼容性

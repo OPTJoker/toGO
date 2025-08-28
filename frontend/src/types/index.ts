@@ -55,3 +55,9 @@ export interface DecompressionResponse {
   decompressedUrl: string;
   filename: string;
 }
+
+// 访问统计相关类型
+export interface VisitorStats {
+  todayVisitors: number;
+  date: string;
+}

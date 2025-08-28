@@ -1,14 +1,88 @@
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Card, Typography, Space } from 'antd';
 import Header from '../components/Header';
 import * as Icons from '@ant-design/icons';
 import { tools, categories } from '../data/tools';
-import type { Tool } from '../types';
+import type { Tool, VisitorStats } from '../types';
+import { statsApi } from '../api';
 import homeBgBanner from '../assets/home-bg-banner.jpg';
 
 const { Title, Paragraph } = Typography;
 
 const Home: React.FC = () => {
+  const [visitorStats, setVisitorStats] = useState<VisitorStats | null>(null);
+  const [totalVisitors, setTotalVisitors] = useState<number>(0);
+  const [floatPosition, setFloatPosition] = useState({ x: window.innerWidth - 180, y: window.innerHeight - 100 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const floatRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // 记录访问并获取统计数据
+    const recordAndGetStats = async () => {
+      try {
+        // 记录当前访问
+        await statsApi.recordVisitor();
+        // 获取统计数据
+        const stats = await statsApi.getVisitorStats();
+        setVisitorStats(stats);
+        // 获取总人数
+        const total = await statsApi.getTotalVisitors();
+        setTotalVisitors(total);
+      } catch (error) {
+        console.error('获取访问统计失败:', error);
+      }
+    };
+
+    recordAndGetStats();
+  }, []);
+
+  // 拖拽开始
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
+  useEffect(() => {
+    // 拖拽中
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        setFloatPosition({
+          x: e.clientX - dragOffset.x,
+          y: e.clientY - dragOffset.y
+        });
+      }
+    };
+
+    // 拖拽结束
+    const handleMouseUp = () => {
+      if (isDragging) {
+        setIsDragging(false);
+        // 自动吸附到左边或右边，增加边距
+        const windowWidth = window.innerWidth;
+        const floatWidth = floatRef.current?.offsetWidth || 180; // 动态获取浮窗宽度
+        const margin = 20; // 边距
+        const isLeftSide = floatPosition.x < windowWidth / 2;
+        setFloatPosition(prev => ({
+          ...prev,
+          x: isLeftSide ? margin : windowWidth - floatWidth - margin
+        }));
+      }
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragOffset, floatPosition.x]);
 
   const handleToolClick = (tool: Tool) => {
     if (tool.implemented) {
@@ -189,6 +263,40 @@ const Home: React.FC = () => {
           {renderBeiAn()}
         </div>
       </div>
+      
+      {/* 访问统计显示 */}
+      {visitorStats && (
+        <div 
+          ref={floatRef}
+          style={{
+            position: 'fixed',
+            left: `${floatPosition.x}px`,
+            top: `${floatPosition.y}px`,
+            background: 'rgba(255, 255, 255, 0.9)',
+            padding: '12px 16px',
+            borderRadius: '20px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            fontSize: '14px',
+            color: '#666',
+            zIndex: 1000,
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            cursor: isDragging ? 'grabbing' : 'grab',
+            userSelect: 'none',
+            maxWidth: `${window.innerWidth * 0.9}px`,
+            whiteSpace: 'nowrap',
+            transition: isDragging ? 'none' : 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+          onMouseDown={handleMouseDown}
+        >
+          <div style={{ marginBottom: '4px' }}>
+            今日服务: {visitorStats.todayVisitors}人
+          </div>
+          <div>
+            累计: {totalVisitors} 人
+          </div>
+        </div>
+      )}
     </div>
   );
 };
