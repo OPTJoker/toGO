@@ -40,7 +40,7 @@ apt install -y curl wget git nginx mysql-client build-essential ffmpeg netcat-op
 install_go() {
     echo -e "${BLUE}📦 安装Go...${NC}"
     
-    if command -v go &> /dev/null; then
+    if command -v go version &> /dev/null; then
         echo -e "${GREEN}Go已安装: $(go version)${NC}"
         return 0
     fi
