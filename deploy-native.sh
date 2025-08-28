@@ -62,10 +62,35 @@ mkdir -p $INSTALL_DIR/logs
 
 # 6. 检查MySQL并创建数据库
 echo "📊 配置数据库..."
-if ! systemctl is-active --quiet mysql; then
-    echo "❌ MySQL服务未运行，请启动MySQL服务"
-    echo "运行: systemctl start mysql"
+
+# 检测MySQL服务名称
+MYSQL_SERVICE=""
+for service in mysql mysqld mariadb; do
+    if systemctl list-unit-files | grep -q "^${service}.service"; then
+        MYSQL_SERVICE=$service
+        break
+    fi
+done
+
+if [ -z "$MYSQL_SERVICE" ]; then
+    echo "❌ 未找到MySQL服务，请先安装MySQL"
+    echo "安装命令: apt install -y mysql-server"
     exit 1
+fi
+
+echo "检测到MySQL服务: $MYSQL_SERVICE"
+
+if ! systemctl is-active --quiet $MYSQL_SERVICE; then
+    echo "❌ MySQL服务未运行，正在启动..."
+    systemctl start $MYSQL_SERVICE
+    systemctl enable $MYSQL_SERVICE
+    
+    if ! systemctl is-active --quiet $MYSQL_SERVICE; then
+        echo "❌ MySQL服务启动失败"
+        echo "请手动启动: systemctl start $MYSQL_SERVICE"
+        exit 1
+    fi
+    echo "✅ MySQL服务已启动"
 fi
 
 echo "请输入MySQL root密码来创建数据库："
@@ -127,8 +152,8 @@ echo "⚙️ 创建systemd服务..."
 cat > /etc/systemd/system/togo-backend.service << EOF
 [Unit]
 Description=toGO Backend Service
-After=network.target mysql.service
-Wants=mysql.service
+After=network.target ${MYSQL_SERVICE}.service
+Wants=${MYSQL_SERVICE}.service
 
 [Service]
 Type=simple
