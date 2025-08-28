@@ -8,7 +8,7 @@ set -e
 PROJECT_NAME=togo
 REMOTE_HOST=101.126.6.243
 MYSQL_DB_NAME=toGO  # 修改为toGO数据库名
-MYSQL_DB_PW=yourpassword  # 请修改为实际的MySQL root密码
+MYSQL_DB_PW=root123456  # 请修改为实际的MySQL root密码
 SERVICE_USER=togo
 INSTALL_DIR=/opt/togo
 WEB_DIR=/var/www/togo

@@ -92,7 +92,7 @@ if command -v mysql > /dev/null 2>&1; then
     DB_HOST=${DB_HOST:-localhost}
     DB_PORT=${DB_PORT:-3306}
     DB_USER=${DB_USER:-root}
-    DB_NAME=${DB_NAME:-togo_stats}
+    DB_NAME=${DB_NAME:-toGO}
     
     log_info "测试数据库连接..."
     if mysql -h$DB_HOST -P$DB_PORT -u$DB_USER -e "SELECT 1;" > /dev/null 2>&1; then
@@ -179,7 +179,7 @@ echo "  DB_HOST: ${DB_HOST:-localhost}"
 echo "  DB_PORT: ${DB_PORT:-3306}"
 echo "  DB_USER: ${DB_USER:-root}"
 echo "  DB_PASSWORD: ${DB_PASSWORD:-[未设置]}"
-echo "  DB_NAME: ${DB_NAME:-togo_stats}"
+echo "  DB_NAME: ${DB_NAME:-toGO}"
 
 # 7. 检查日志文件
 echo ""
@@ -232,10 +232,10 @@ echo "   export DB_HOST=localhost"
 echo "   export DB_PORT=3306"
 echo "   export DB_USER=root"
 echo "   export DB_PASSWORD=your_password"
-echo "   export DB_NAME=togo_stats"
+echo "   export DB_NAME=toGO"
 echo ""
 echo "4. 如果需要创建数据库:"
-echo "   mysql -u root -p -e \"CREATE DATABASE togo_stats;\""
+echo "   mysql -u root -p -e \"CREATE DATABASE toGO;\""
 echo ""
 echo "5. 如果前端需要启动:"
 echo "   cd frontend && npm install && npm run dev"
