@@ -57,7 +57,7 @@ func LoadConfig() *AppConfig {
 		DBPort:     getEnv("DB_PORT", "3306"),
 		DBUser:     getEnv("DB_USER", "root"),
 		DBPassword: getEnv("DB_PASSWORD", ""),
-		DBName:     getEnv("DB_NAME", "togo_stats"),
+		DBName:     getEnv("DB_NAME", "toGO"),
 	}
 
 	return Config
