@@ -207,7 +207,13 @@ fi
 mkdir -p uploads output static
 chmod 755 uploads output static
 
+# 停止后端服务（如果正在运行）以避免"Text file busy"错误
+echo -e "${YELLOW}🛑 停止现有后端服务...${NC}"
+systemctl stop togo-backend 2>/dev/null || true
+sleep 2
+
 # 复制后端文件
+echo -e "${BLUE}📁 复制后端文件...${NC}"
 cp main $INSTALL_DIR/
 cp .env.production $INSTALL_DIR/.env
 cd ..
@@ -346,7 +352,7 @@ echo -e "${BLUE}🚀 启动服务...${NC}"
 # 重新加载systemd
 systemctl daemon-reload
 
-# 启动并启用服务
+# 启动并启用服务（不需要重复启动，因为前面已经停止了）
 systemctl enable togo-backend
 systemctl start togo-backend
 
