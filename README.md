@@ -142,10 +142,10 @@ git clone https://github.com/OPTJoker/toGO.git
 cd toGO
 
 # 构建并启动所有服务（后端、前端、Nginx）
-./docker-deploy.sh
+./deploy-native.sh #docker暂时不支持，火山服务器有墙，暂时没解决
 # 或
-docker-compose build
-docker-compose up -d
+# docker-compose build
+# docker-compose up -d
 ```
 
 # 查看服务状态
