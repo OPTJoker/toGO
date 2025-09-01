@@ -51,7 +51,7 @@ func LoadConfig() *AppConfig {
 		ServerPort:  port,
 		BaseURL:     baseURL,
 		StaticURL:   staticURL,
-		Environment: getEnv("ENVIRONMENT", "development"),
+		Environment: getEnv("ENVIRONMENT", "production"),
 		// 数据库配置
 		DBHost:     getEnv("DB_HOST", "localhost"),
 		DBPort:     getEnv("DB_PORT", "3306"),
