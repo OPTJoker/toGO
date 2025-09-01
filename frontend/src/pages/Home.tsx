@@ -228,11 +228,19 @@ const Home: React.FC = () => {
   };
 
   const renderBeiAn = () => {
+    const beianCode = "11010102000001"; //todo: 替换为真实的备案号
+    const beianHref = `https://beian.mps.gov.cn/#/query/webSearch?code=${beianCode}`;
+    const beianICP = "京ICP备2025141417号";
+    const beianICPHref = "https://beian.miit.gov.cn/";
     return (
       <div style={{ width: '100%', textAlign: 'center', marginTop: 80, marginBottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <img src="https://portal.volccdn.com/obj/volcfe/footer/national_emblem.png" alt="警徽" style={{ width: 12, height: 12, verticalAlign: 'middle', marginRight: 4 }} />
-            <span style={{ color: '#888', fontSize: 13, verticalAlign: 'middle', marginRight: 4 }}>京公网安备11000002000001号</span>
-            <span style={{ color: '#888', fontSize: 13, verticalAlign: 'middle', marginLeft: 16 }}>京ICP备2025141417号</span>
+            <a href={beianHref}>
+              <span style={{ color: '#888', fontSize: 13, verticalAlign: 'middle', marginRight: 4 }}>京公网安备{beianCode}号</span>
+            </a>
+            <a href={beianICPHref}>
+              <span style={{ color: '#888', fontSize: 13, verticalAlign: 'middle', marginLeft: 16 }}>{beianICP}</span>
+            </a>
           </div>
     );
   };
