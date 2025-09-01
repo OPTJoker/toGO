@@ -5,7 +5,6 @@ import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
 import { Card, Button, Space, Input, message, Row, Col, Typography, Select, Tooltip } from 'antd';
 import { 
   FormatPainterOutlined, 
-  CompressOutlined, 
   CopyOutlined, 
   ClearOutlined,
   CheckOutlined,
@@ -21,7 +20,6 @@ const { TextArea } = Input;
 const { Text } = Typography;
 const { Option } = Select;
 
-const THEME_COLOR = '#ff7e5f'; // 导航主题色
 const SELECTED_BG = 'rgba(255, 126, 95, 0.1)'; // 选中背景色 - 主题色加透明度
 const SELECTED_BORDER = '#ff7e5f'; // 选中边框色 - 主题色
 const SELECTED_TEXT = '#ff7e5f'; // 选中文字色 - 主题色
