@@ -108,6 +108,36 @@ func GetVisitorStats(c *gin.Context) {
 		return
 	}
 
+	// 检查数据库连接是否正常
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Printf("Failed to get underlying sql.DB: %v", err)
+		stats := models.VisitorStats{
+			TodayVisitors: 0,
+			Date:          today,
+		}
+		c.JSON(http.StatusOK, models.APIResponse{
+			Code:    200,
+			Message: "统计功能暂时不可用，返回默认值",
+			Data:    stats,
+		})
+		return
+	}
+
+	if err := sqlDB.Ping(); err != nil {
+		log.Printf("Database ping failed: %v", err)
+		stats := models.VisitorStats{
+			TodayVisitors: 0,
+			Date:          today,
+		}
+		c.JSON(http.StatusOK, models.APIResponse{
+			Code:    200,
+			Message: "统计功能暂时不可用，返回默认值",
+			Data:    stats,
+		})
+		return
+	}
+
 	// 统计今日访问人数
 	var count int64
 	if err := db.Model(&database.VisitorRecord{}).Where("date = ?", today).Count(&count).Error; err != nil {
@@ -139,6 +169,28 @@ func GetTotalVisitors(c *gin.Context) {
 	db := database.GetDB()
 	if db == nil {
 		log.Printf("Database connection is nil - returning default total")
+		c.JSON(http.StatusOK, models.APIResponse{
+			Code:    200,
+			Message: "统计功能暂时不可用，返回默认值",
+			Data:    map[string]interface{}{"totalVisitors": 0},
+		})
+		return
+	}
+
+	// 检查数据库连接是否正常
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Printf("Failed to get underlying sql.DB: %v", err)
+		c.JSON(http.StatusOK, models.APIResponse{
+			Code:    200,
+			Message: "统计功能暂时不可用，返回默认值",
+			Data:    map[string]interface{}{"totalVisitors": 0},
+		})
+		return
+	}
+
+	if err := sqlDB.Ping(); err != nil {
+		log.Printf("Database ping failed: %v", err)
 		c.JSON(http.StatusOK, models.APIResponse{
 			Code:    200,
 			Message: "统计功能暂时不可用，返回默认值",
