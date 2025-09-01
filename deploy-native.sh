@@ -4,6 +4,9 @@
 
 set -e
 
+ESCAPE=true # 是否跳过环境配置，默认跳过
+DB_ESCAPE=true # 是否跳过数据库创建，默认跳过
+
 # 项目配置
 PROJECT_NAME=togo
 REMOTE_HOST=101.126.6.243
@@ -33,9 +36,9 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # 1. 安装必要的依赖
-echo -e "${BLUE}📦 安装系统依赖...${NC}"
-apt update
-apt install -y curl wget git nginx mysql-client build-essential ffmpeg netcat-openbsd
+ESCAPE && echo -e "${BLUE}📦 安装系统依赖...${NC}"
+ESCAPE && apt update
+ESCAPE && apt install -y curl wget git nginx mysql-client build-essential ffmpeg netcat-openbsd
 
 # 2. 安装Go (如果未安装) - 增强版
 install_go() {
@@ -104,8 +107,8 @@ install_nodejs() {
 }
 
 # 调用安装函数
-install_go
-install_nodejs
+ESCAPE && install_go
+ESCAPE && install_nodejs
 
 # 4. 创建服务用户
 echo -e "${BLUE}👤 创建服务用户...${NC}"
@@ -156,18 +159,16 @@ if ! systemctl is-active --quiet $MYSQL_SERVICE; then
 fi
 
 # 创建数据库（使用toGO作为数据库名）
-echo "🔧 检查并创建数据库 ${MYSQL_DB_NAME}..."
-DB_EXISTS=$(mysql -uroot -e "SHOW DATABASES LIKE '${MYSQL_DB_NAME}';" 2>/dev/null | grep ${MYSQL_DB_NAME} || true)
-if [ -z "$DB_EXISTS" ]; then
+
+create_toGO_db() {
+    echo "🔧 创建数据库 ${MYSQL_DB_NAME}..."
     echo "请输入MySQL root密码来创建数据库："
     mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" || {
         echo -e "${RED}❌ 数据库创建失败${NC}"
         exit 1
     }
-    echo -e "${GREEN}✅ 数据库 ${MYSQL_DB_NAME} 已创建${NC}"
-else
-    echo -e "${GREEN}数据库 ${MYSQL_DB_NAME} 已存在${NC}"
-fi
+}
+DB_ESCAPE && create_toGO_db
 
 # 7. 构建后端 - 增强版
 echo -e "${BLUE}🔨 构建后端应用...${NC}"
