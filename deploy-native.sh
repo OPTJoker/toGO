@@ -35,6 +35,13 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+ESCAPE() {
+    return $ESCAPE;
+}
+DB_ESCAPE() {
+    return $DB_ESCAPE;
+}
+
 # 1. 安装必要的依赖
 ESCAPE && echo -e "${BLUE}📦 安装系统依赖...${NC}"
 ESCAPE && apt update

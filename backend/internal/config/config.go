@@ -34,7 +34,7 @@ func LoadConfig() *AppConfig {
 	baseURL := getEnv("BASE_URL", "")
 	if baseURL == "" {
 		// 如果没有设置BASE_URL，根据环境自动生成
-		env := getEnv("ENVIRONMENT", "development")
+		env := getEnv("ENVIRONMENT", "production")
 		if env == "production" {
 			// 生产环境使用相对路径
 			baseURL = ""

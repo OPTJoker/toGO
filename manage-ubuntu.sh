@@ -170,9 +170,9 @@ show_logs() {
             sudo journalctl -u nginx --no-pager -n 20
             echo ""
             echo "提示: 使用以下命令查看特定日志："
-            echo "  ./manage.sh logs backend  - 后端日志"
-            echo "  ./manage.sh logs nginx    - Nginx日志"
-            echo "  ./manage.sh logs error    - 错误日志"
+            echo "  ./manage-ubuntu.sh logs backend  - 后端日志"
+            echo "  ./manage-ubuntu.sh logs nginx    - Nginx日志"
+            echo "  ./manage-ubuntu.sh logs error    - 错误日志"
             ;;
     esac
 }
