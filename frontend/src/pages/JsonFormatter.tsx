@@ -2,19 +2,31 @@ import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { dracula } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
-import { Card, Button, Space, Input, message, Row, Col, Typography, Select } from 'antd';
+import { Card, Button, Space, Input, message, Row, Col, Typography, Select, Tooltip } from 'antd';
 import { 
   FormatPainterOutlined, 
   CompressOutlined, 
   CopyOutlined, 
   ClearOutlined,
-  CheckOutlined
+  CheckOutlined,
+  ShrinkOutlined,
+  ArrowsAltOutlined,
+  ApartmentOutlined,
+  CodeOutlined,
+  AlignLeftOutlined
 } from '@ant-design/icons';
 import JsonView from '@uiw/react-json-view';
 
 const { TextArea } = Input;
 const { Text } = Typography;
 const { Option } = Select;
+
+const THEME_COLOR = '#ff7e5f'; // 导航主题色
+const SELECTED_BG = 'rgba(255, 126, 95, 0.1)'; // 选中背景色 - 主题色加透明度
+const SELECTED_BORDER = '#ff7e5f'; // 选中边框色 - 主题色
+const SELECTED_TEXT = '#ff7e5f'; // 选中文字色 - 主题色
+const DEFAULT_BORDER = '#595959'; // 默认边框色 - 深灰色
+const DEFAULT_TEXT = '#595959'; // 默认文字色 - 深灰色
 
 const JsonFormatter: React.FC = () => {
   const [inputJson, setInputJson] = useState('');
@@ -25,6 +37,27 @@ const JsonFormatter: React.FC = () => {
   const [fullscreen, setFullscreen] = useState(false);
   const [viewMode, setViewMode] = useState<'tree' | 'code'>('tree');
   const [parsedJson, setParsedJson] = useState<any>(null);
+  const [collapsed, setCollapsed] = useState<boolean | number>(false); // false表示全展开，true表示全收起，数字表示展开层数
+
+  // 添加全局样式来覆盖Ant Design的默认focus样式
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .ant-btn:focus,
+      .ant-btn:hover,
+      .ant-btn:active {
+        box-shadow: none !important;
+        outline: none !important;
+      }
+      .ant-btn:focus {
+        border-color: inherit !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   // 格式化 JSON
   const formatJson = () => {
@@ -272,107 +305,202 @@ const JsonFormatter: React.FC = () => {
                 size="small" 
                 title="输出结果"
                 extra={
-                  <Space>
-                    {/* 视图模式切换按钮 */}
-                    <Button.Group size="small">
-                      <Button 
-                        type={viewMode === 'tree' ? 'primary' : 'default'}
-                        onClick={() => setViewMode('tree')}
-                      >
-                        树形视图
-                      </Button>
-                      <Button 
-                        type={viewMode === 'code' ? 'primary' : 'default'}
-                        onClick={() => setViewMode('code')}
-                      >
-                        代码视图
-                      </Button>
-                    </Button.Group>
-                    
-                    {/* 状态互斥按钮：格式化/压缩 */}
-                    {(() => {
-                      // 判断当前 outputJson 是否为压缩状态（无换行/无缩进）
-                      if (!outputJson) {
-                        return (
-                          <Button
-                            type="primary"
-                            size="small"
-                            icon={<FormatPainterOutlined />}
-                            onClick={formatJson}
-                            style={{ marginRight: 8 }}
-                          >
-                            格式化
-                          </Button>
-                        );
-                      }
-                      // 如果已经格式化（有换行和缩进），则显示压缩按钮
-                      if (outputJson.includes('\n') && outputJson.includes('  ')) {
-                        return (
-                          <Button
-                            type="primary"
-                            size="small"
-                            icon={<CompressOutlined />}
-                            onClick={() => {
-                              compressJson();
-                            }}
-                            style={{ marginRight: 8 }}
-                          >
-                            压缩
-                          </Button>
-                        );
-                      }
-                      // 否则显示格式化按钮
-                      return (
-                        <Button
-                          type="primary"
-                          size="small"
-                          icon={<FormatPainterOutlined />}
-                          onClick={() => {
-                            formatJson();
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: '400px', width: '100%' }}>
+                    {/* 左侧功能按钮组 */}
+                    <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                      {/* 视图模式切换按钮 */}
+                      <Tooltip title="树形视图" color="#262626" mouseEnterDelay={0.3}>
+                        <Button 
+                          type="default"
+                          onClick={() => setViewMode('tree')}
+                          icon={<ApartmentOutlined style={{ fontSize: '16px', color: viewMode === 'tree' ? SELECTED_TEXT : DEFAULT_TEXT }} />}
+                          style={{ 
+                            padding: '4px 12px', 
+                            marginRight: 8,
+                            backgroundColor: viewMode === 'tree' ? SELECTED_BG : '#ffffff',
+                            borderColor: viewMode === 'tree' ? SELECTED_BORDER : DEFAULT_BORDER,
+                            color: viewMode === 'tree' ? SELECTED_TEXT : DEFAULT_TEXT,
+                            boxShadow: 'none'
                           }}
-                          style={{ marginRight: 8 }}
-                        >
-                          格式化
-                        </Button>
-                      );
-                    })()}
-                    <Button 
-                      type="default"
-                      size="small"
-                      icon={copied ? <CheckOutlined /> : <CopyOutlined />} 
-                      onClick={copyToClipboard}
-                      style={{ color: copied ? '#52c41a' : undefined, border: '1px solid #d9d9d9', background: '#fff' }}
-                    >
-                      {copied ? '已复制' : '复制'}
-                    </Button>
-                    <Button
-                      icon={<ClearOutlined />}
-                      danger
-                      size="small"
-                      onClick={clearAll}
-                      style={{ marginLeft: 8 }}
-                    >
-                      清空
-                    </Button>
-                    <Button
-                      size="small"
-                      icon={<FormatPainterOutlined />}
-                      onClick={insertExample}
-                      style={{ marginLeft: 8 }}
-                    >
-                      插入示例
-                    </Button>
-                    {!fullscreen && (
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<FullscreenOutlined />}
-                        onClick={() => setFullscreen(true)}
-                      >
-                        全屏
-                      </Button>
-                    )}
-                  </Space>
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = viewMode === 'tree' ? SELECTED_BORDER : DEFAULT_BORDER;
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = viewMode === 'tree' ? SELECTED_BORDER : DEFAULT_BORDER;
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                          onFocus={(e) => {
+                            e.currentTarget.style.borderColor = viewMode === 'tree' ? SELECTED_BORDER : DEFAULT_BORDER;
+                            e.currentTarget.style.boxShadow = 'none';
+                            e.currentTarget.style.outline = 'none';
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.style.borderColor = viewMode === 'tree' ? SELECTED_BORDER : DEFAULT_BORDER;
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                        />
+                      </Tooltip>
+                      <Tooltip title="代码视图" color="#262626" mouseEnterDelay={0.3}>
+                        <Button 
+                          type="default"
+                          onClick={() => setViewMode('code')}
+                          icon={<CodeOutlined style={{ fontSize: '16px', color: viewMode === 'code' ? SELECTED_TEXT : DEFAULT_TEXT }} />}
+                          style={{ 
+                            padding: '4px 12px', 
+                            marginRight: 12,
+                            backgroundColor: viewMode === 'code' ? SELECTED_BG : '#ffffff',
+                            borderColor: viewMode === 'code' ? SELECTED_BORDER : DEFAULT_BORDER,
+                            color: viewMode === 'code' ? SELECTED_TEXT : DEFAULT_TEXT,
+                            boxShadow: 'none'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = viewMode === 'code' ? SELECTED_BORDER : DEFAULT_BORDER;
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = viewMode === 'code' ? SELECTED_BORDER : DEFAULT_BORDER;
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                          onFocus={(e) => {
+                            e.currentTarget.style.borderColor = viewMode === 'code' ? SELECTED_BORDER : DEFAULT_BORDER;
+                            e.currentTarget.style.boxShadow = 'none';
+                            e.currentTarget.style.outline = 'none';
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.style.borderColor = viewMode === 'code' ? SELECTED_BORDER : DEFAULT_BORDER;
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                        />
+                      </Tooltip>
+                      
+                      {viewMode === 'tree' && parsedJson && (
+                        <>
+                          <Tooltip title="全部展开" color="#262626" mouseEnterDelay={0.3}>
+                            <Button 
+                              type="default"
+                              onClick={() => setCollapsed(false)}
+                              icon={<ArrowsAltOutlined style={{ fontSize: '16px', color: collapsed === false ? SELECTED_TEXT : DEFAULT_TEXT }} />}
+                              style={{ 
+                                padding: '4px 12px', 
+                                marginRight: 8,
+                                backgroundColor: collapsed === false ? SELECTED_BG : '#ffffff',
+                                borderColor: collapsed === false ? SELECTED_BORDER : DEFAULT_BORDER,
+                                color: collapsed === false ? SELECTED_TEXT : DEFAULT_TEXT,
+                                boxShadow: 'none'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = collapsed === false ? SELECTED_BORDER : DEFAULT_BORDER;
+                                e.currentTarget.style.boxShadow = 'none';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = collapsed === false ? SELECTED_BORDER : DEFAULT_BORDER;
+                                e.currentTarget.style.boxShadow = 'none';
+                              }}
+                              onFocus={(e) => {
+                                e.currentTarget.style.borderColor = collapsed === false ? SELECTED_BORDER : DEFAULT_BORDER;
+                                e.currentTarget.style.boxShadow = 'none';
+                                e.currentTarget.style.outline = 'none';
+                              }}
+                              onBlur={(e) => {
+                                e.currentTarget.style.borderColor = collapsed === false ? SELECTED_BORDER : DEFAULT_BORDER;
+                                e.currentTarget.style.boxShadow = 'none';
+                              }}
+                            />
+                          </Tooltip>
+                          <Tooltip title="全部收起" color="#262626" mouseEnterDelay={0.3}>
+                            <Button 
+                              type="default"
+                              onClick={() => setCollapsed(true)}
+                              icon={<ShrinkOutlined style={{ fontSize: '16px', color: collapsed === true ? SELECTED_TEXT : DEFAULT_TEXT }} />}
+                              style={{ 
+                                padding: '4px 12px', 
+                                marginRight: 12,
+                                backgroundColor: collapsed === true ? SELECTED_BG : '#ffffff',
+                                borderColor: collapsed === true ? SELECTED_BORDER : DEFAULT_BORDER,
+                                color: collapsed === true ? SELECTED_TEXT : DEFAULT_TEXT,
+                                boxShadow: 'none'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = collapsed === true ? SELECTED_BORDER : DEFAULT_BORDER;
+                                e.currentTarget.style.boxShadow = 'none';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = collapsed === true ? SELECTED_BORDER : DEFAULT_BORDER;
+                                e.currentTarget.style.boxShadow = 'none';
+                              }}
+                              onFocus={(e) => {
+                                e.currentTarget.style.borderColor = collapsed === true ? SELECTED_BORDER : DEFAULT_BORDER;
+                                e.currentTarget.style.boxShadow = 'none';
+                                e.currentTarget.style.outline = 'none';
+                              }}
+                              onBlur={(e) => {
+                                e.currentTarget.style.borderColor = collapsed === true ? SELECTED_BORDER : DEFAULT_BORDER;
+                                e.currentTarget.style.boxShadow = 'none';
+                              }}
+                            />
+                          </Tooltip>
+                        </>
+                      )}
+                      
+                      {/* 格式化/压缩按钮 - 只在代码视图下显示 */}
+                      {viewMode === 'code' && outputJson && (
+                        <Tooltip title={outputJson.includes('\n') && outputJson.includes('  ') ? '压缩' : '格式化'} color="#262626" mouseEnterDelay={0.3}>
+                          <Button
+                            type="default"
+                            size="middle"
+                            icon={<AlignLeftOutlined style={{ fontSize: '16px', color: (outputJson.includes('\n') && outputJson.includes('  ')) ? SELECTED_TEXT : DEFAULT_TEXT }} />}
+                            onClick={() => {
+                              if (outputJson.includes('\n') && outputJson.includes('  ')) {
+                                compressJson();
+                              } else {
+                                formatJson();
+                              }
+                            }}
+                            style={{ 
+                              marginRight: 12, 
+                              padding: '4px 12px', 
+                              borderColor: (outputJson.includes('\n') && outputJson.includes('  ')) ? SELECTED_BORDER : DEFAULT_BORDER,
+                              color: (outputJson.includes('\n') && outputJson.includes('  ')) ? SELECTED_TEXT : DEFAULT_TEXT,
+                              backgroundColor: (outputJson.includes('\n') && outputJson.includes('  ')) ? SELECTED_BG : '#ffffff',
+                              boxShadow: 'none'
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </div>
+                    
+                    {/* 右侧操作按钮组 */}
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Tooltip title={copied ? '已复制' : '复制'} color="#262626" mouseEnterDelay={0.3}>
+                        <Button 
+                          type="default"
+                          size="middle"
+                          icon={copied ? <CheckOutlined style={{ fontSize: '16px' }} /> : <CopyOutlined style={{ fontSize: '16px' }} />} 
+                          onClick={copyToClipboard}
+                          style={{ 
+                            color: copied ? SELECTED_TEXT : DEFAULT_TEXT, 
+                            border: `1px solid ${DEFAULT_BORDER}`, 
+                            background: copied ? SELECTED_BG : '#fff',
+                            marginRight: 8,
+                            padding: '4px 12px'
+                          }}
+                        />
+                      </Tooltip>
+
+                      {!fullscreen && (
+                        <Tooltip title="全屏" color="#262626" mouseEnterDelay={0.3}>
+                          <Button
+                            type="text"
+                            size="middle"
+                            icon={<FullscreenOutlined style={{ fontSize: '16px' }} />}
+                            onClick={() => setFullscreen(true)}
+                            style={{ padding: '4px 12px', borderColor: DEFAULT_BORDER }}
+                          />
+                        </Tooltip>
+                      )}
+                    </div>
+                  </div>
                 }
                 style={{ marginBottom: '16px', position: 'relative', zIndex: fullscreen ? 1001 : 'auto' }}
                 bodyStyle={fullscreen ? {
@@ -393,21 +521,23 @@ const JsonFormatter: React.FC = () => {
                 <div style={{ minHeight: fullscreen ? '100vh' : '640px', background: '#fff', borderRadius: 8, padding: 0, position: 'relative', textAlign: 'left' }}>
                   {/* 全屏收起按钮，绝对定位，始终可见 */}
                   {fullscreen && (
-                    <Button
-                      type="primary"
-                      size="small"
-                      icon={<FullscreenExitOutlined />}
-                      onClick={() => setFullscreen(false)}
-                      style={{
-                        position: 'absolute',
-                        top: 16,
-                        right: 24,
-                        zIndex: 2000,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
-                      }}
-                    >
-                      收起
-                    </Button>
+                    <Tooltip title="收起" color="#262626" mouseEnterDelay={0.3}>
+                      <Button
+                        type="default"
+                        size="small"
+                        icon={<FullscreenExitOutlined />}
+                        onClick={() => setFullscreen(false)}
+                        style={{
+                          position: 'absolute',
+                          top: 16,
+                          right: 24,
+                          zIndex: 2000,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                          backgroundColor: '#ffffff',
+                          borderColor: DEFAULT_BORDER
+                        }}
+                      />
+                    </Tooltip>
                   )}
                   {jsonError ? (
                     <div style={{
@@ -439,7 +569,7 @@ const JsonFormatter: React.FC = () => {
                             padding: '16px',
                             borderRadius: '8px',
                           }}
-                          collapsed={2} // 默认展开2层
+                          collapsed={collapsed} // 使用状态控制展开/收起
                           displayDataTypes={false}
                           displayObjectSize={false}
                           enableClipboard={false}
