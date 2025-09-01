@@ -9,7 +9,21 @@ import (
 	"toGif-backend/internal/models"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
+
+// tryReconnectDB 尝试重新连接数据库
+func tryReconnectDB() *gorm.DB {
+	if !database.IsDBConnected() {
+		log.Printf("Database connection lost, attempting to reconnect...")
+		if err := database.ReconnectDB(); err != nil {
+			log.Printf("Failed to reconnect to database: %v", err)
+			return nil
+		}
+		log.Printf("Database reconnected successfully")
+	}
+	return database.GetDB()
+}
 
 // RecordVisitor 记录访问者
 func RecordVisitor(c *gin.Context) {
@@ -31,13 +45,17 @@ func RecordVisitor(c *gin.Context) {
 	}
 
 	db := database.GetDB()
-	if db == nil {
-		log.Printf("Database connection is nil - stats feature disabled")
-		c.JSON(http.StatusOK, models.APIResponse{
-			Code:    200,
-			Message: "访问记录功能暂时不可用，但请求已处理",
-		})
-		return
+	if db == nil || !database.IsDBConnected() {
+		// 尝试重连
+		db = tryReconnectDB()
+		if db == nil {
+			log.Printf("Database connection is nil - stats feature disabled")
+			c.JSON(http.StatusOK, models.APIResponse{
+				Code:    200,
+				Message: "访问记录功能暂时不可用，但请求已处理",
+			})
+			return
+		}
 	}
 
 	// 检查数据库连接是否正常
@@ -94,18 +112,22 @@ func GetVisitorStats(c *gin.Context) {
 	today := time.Now().Format("2006-01-02")
 
 	db := database.GetDB()
-	if db == nil {
-		log.Printf("Database connection is nil - returning default stats")
-		stats := models.VisitorStats{
-			TodayVisitors: 0,
-			Date:          today,
+	if db == nil || !database.IsDBConnected() {
+		// 尝试重连
+		db = tryReconnectDB()
+		if db == nil {
+			log.Printf("Database connection is nil - returning default stats")
+			stats := models.VisitorStats{
+				TodayVisitors: 0,
+				Date:          today,
+			}
+			c.JSON(http.StatusOK, models.APIResponse{
+				Code:    200,
+				Message: "统计功能暂时不可用，返回默认值",
+				Data:    stats,
+			})
+			return
 		}
-		c.JSON(http.StatusOK, models.APIResponse{
-			Code:    200,
-			Message: "统计功能暂时不可用，返回默认值",
-			Data:    stats,
-		})
-		return
 	}
 
 	// 检查数据库连接是否正常
@@ -167,14 +189,18 @@ func GetTotalVisitors(c *gin.Context) {
 	log.Printf("GetTotalVisitors called")
 
 	db := database.GetDB()
-	if db == nil {
-		log.Printf("Database connection is nil - returning default total")
-		c.JSON(http.StatusOK, models.APIResponse{
-			Code:    200,
-			Message: "统计功能暂时不可用，返回默认值",
-			Data:    map[string]interface{}{"totalVisitors": 0},
-		})
-		return
+	if db == nil || !database.IsDBConnected() {
+		// 尝试重连
+		db = tryReconnectDB()
+		if db == nil {
+			log.Printf("Database connection is nil - returning default total")
+			c.JSON(http.StatusOK, models.APIResponse{
+				Code:    200,
+				Message: "统计功能暂时不可用，返回默认值",
+				Data:    map[string]interface{}{"totalVisitors": 0},
+			})
+			return
+		}
 	}
 
 	// 检查数据库连接是否正常
