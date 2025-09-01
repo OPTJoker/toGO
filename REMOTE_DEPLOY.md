@@ -37,11 +37,6 @@ exit;
 vim backend/.env.production
 ```
 
-修改数据库密码：
-```
-DB_PASSWORD=your_actual_mysql_password
-```
-
 #### 3. 执行部署
 
 运行部署脚本：
