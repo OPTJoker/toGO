@@ -76,7 +76,7 @@ const JsonFormatter: React.FC = () => {
     }
   };
 
-  // 复制到剪贴板
+  // 复制到剪贴板 - 修复版本
   const copyToClipboard = async () => {
     try {
       if (!outputJson) {
@@ -84,14 +84,62 @@ const JsonFormatter: React.FC = () => {
         return;
       }
       
-      await navigator.clipboard.writeText(outputJson);
-      setCopied(true);
-      message.success('已复制到剪贴板');
+      // 优先使用现代的 Clipboard API
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(outputJson);
+        setCopied(true);
+        message.success('已复制到剪贴板');
+      } else {
+        // 降级方案：使用传统的 document.execCommand
+        const textArea = document.createElement('textarea');
+        textArea.value = outputJson;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          const successful = document.execCommand('copy');
+          if (successful) {
+            setCopied(true);
+            message.success('已复制到剪贴板');
+          } else {
+            throw new Error('execCommand failed');
+          }
+        } catch (err) {
+          console.error('复制失败:', err);
+          message.error('复制失败，请手动选择并复制文本');
+        } finally {
+          document.body.removeChild(textArea);
+        }
+      }
       
       // 3秒后重置复制状态
       setTimeout(() => setCopied(false), 3000);
     } catch (error) {
-      message.error('复制失败，请手动复制');
+      console.error('复制操作失败:', error);
+      
+      // 最后的降级方案：提示用户手动复制
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = outputJson;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        message.info('请按 Ctrl+C (或 Cmd+C) 手动复制选中的文本');
+        
+        setTimeout(() => {
+          document.body.removeChild(textArea);
+        }, 5000);
+      } catch (fallbackError) {
+        message.error('复制功能不可用，请手动选择文本进行复制');
+      }
     }
   };
 
