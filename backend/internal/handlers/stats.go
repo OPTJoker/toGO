@@ -32,10 +32,10 @@ func RecordVisitor(c *gin.Context) {
 
 	db := database.GetDB()
 	if db == nil {
-		log.Printf("Database connection is nil")
-		c.JSON(http.StatusServiceUnavailable, models.APIResponse{
-			Code:    503,
-			Message: "数据库服务暂时不可用",
+		log.Printf("Database connection is nil - stats feature disabled")
+		c.JSON(http.StatusOK, models.APIResponse{
+			Code:    200,
+			Message: "访问记录功能暂时不可用，但请求已处理",
 		})
 		return
 	}
@@ -44,18 +44,18 @@ func RecordVisitor(c *gin.Context) {
 	sqlDB, err := db.DB()
 	if err != nil {
 		log.Printf("Failed to get underlying sql.DB: %v", err)
-		c.JSON(http.StatusServiceUnavailable, models.APIResponse{
-			Code:    503,
-			Message: "数据库连接异常",
+		c.JSON(http.StatusOK, models.APIResponse{
+			Code:    200,
+			Message: "访问记录功能暂时不可用，但请求已处理",
 		})
 		return
 	}
 
 	if err := sqlDB.Ping(); err != nil {
 		log.Printf("Database ping failed: %v", err)
-		c.JSON(http.StatusServiceUnavailable, models.APIResponse{
-			Code:    503,
-			Message: "数据库连接失败",
+		c.JSON(http.StatusOK, models.APIResponse{
+			Code:    200,
+			Message: "访问记录功能暂时不可用，但请求已处理",
 		})
 		return
 	}
@@ -95,10 +95,15 @@ func GetVisitorStats(c *gin.Context) {
 
 	db := database.GetDB()
 	if db == nil {
-		log.Printf("Database connection is nil")
-		c.JSON(http.StatusServiceUnavailable, models.APIResponse{
-			Code:    503,
-			Message: "数据库服务暂时不可用",
+		log.Printf("Database connection is nil - returning default stats")
+		stats := models.VisitorStats{
+			TodayVisitors: 0,
+			Date:          today,
+		}
+		c.JSON(http.StatusOK, models.APIResponse{
+			Code:    200,
+			Message: "统计功能暂时不可用，返回默认值",
+			Data:    stats,
 		})
 		return
 	}
@@ -133,10 +138,11 @@ func GetTotalVisitors(c *gin.Context) {
 
 	db := database.GetDB()
 	if db == nil {
-		log.Printf("Database connection is nil")
-		c.JSON(http.StatusServiceUnavailable, models.APIResponse{
-			Code:    503,
-			Message: "数据库服务暂时不可用",
+		log.Printf("Database connection is nil - returning default total")
+		c.JSON(http.StatusOK, models.APIResponse{
+			Code:    200,
+			Message: "统计功能暂时不可用，返回默认值",
+			Data:    map[string]interface{}{"totalVisitors": 0},
 		})
 		return
 	}
