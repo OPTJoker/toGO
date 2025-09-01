@@ -228,7 +228,7 @@ const Home: React.FC = () => {
   };
 
   const renderBeiAn = () => {
-    const beianCode = "11010102000001"; //todo: 替换为真实的备案号
+    const beianCode = "110xxxyyyyzzzz"; //todo: 替换为真实的备案号
     const beianHref = `https://beian.mps.gov.cn/#/query/webSearch?code=${beianCode}`;
     const beianICP = "京ICP备2025141417号";
     const beianICPHref = "https://beian.miit.gov.cn/";
