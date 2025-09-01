@@ -231,8 +231,8 @@ const Home: React.FC = () => {
     return (
       <div style={{ width: '100%', textAlign: 'center', marginTop: 80, marginBottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <img src="https://portal.volccdn.com/obj/volcfe/footer/national_emblem.png" alt="警徽" style={{ width: 12, height: 12, verticalAlign: 'middle', marginRight: 4 }} />
-            <span style={{ color: '#888', fontSize: 13, verticalAlign: 'middle', marginRight: 4 }}>京公网安备11010xxxxxx号</span>
-            <span style={{ color: '#888', fontSize: 13, verticalAlign: 'middle', marginLeft: 16 }}>京ICP备20xxxxxx号-x</span>
+            <span style={{ color: '#888', fontSize: 13, verticalAlign: 'middle', marginRight: 4 }}>京公网安备11000002000001号</span>
+            <span style={{ color: '#888', fontSize: 13, verticalAlign: 'middle', marginLeft: 16 }}>京ICP备2025141417号</span>
           </div>
     );
   };
