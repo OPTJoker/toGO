@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -12,14 +13,48 @@ import (
 
 // RecordVisitor 记录访问者
 func RecordVisitor(c *gin.Context) {
+	// 添加日志记录
+	log.Printf("RecordVisitor called from IP: %s", c.ClientIP())
+
 	clientIP := getClientIP(c)
 	userAgent := c.GetHeader("User-Agent")
 	today := time.Now().Format("2006-01-02")
 
+	// 验证基本参数
+	if clientIP == "" {
+		log.Printf("Invalid client IP")
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Code:    400,
+			Message: "无法获取客户端IP",
+		})
+		return
+	}
+
 	db := database.GetDB()
 	if db == nil {
-		c.JSON(http.StatusInternalServerError, models.APIResponse{
-			Code:    500,
+		log.Printf("Database connection is nil")
+		c.JSON(http.StatusServiceUnavailable, models.APIResponse{
+			Code:    503,
+			Message: "数据库服务暂时不可用",
+		})
+		return
+	}
+
+	// 检查数据库连接是否正常
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Printf("Failed to get underlying sql.DB: %v", err)
+		c.JSON(http.StatusServiceUnavailable, models.APIResponse{
+			Code:    503,
+			Message: "数据库连接异常",
+		})
+		return
+	}
+
+	if err := sqlDB.Ping(); err != nil {
+		log.Printf("Database ping failed: %v", err)
+		c.JSON(http.StatusServiceUnavailable, models.APIResponse{
+			Code:    503,
 			Message: "数据库连接失败",
 		})
 		return
@@ -37,13 +72,15 @@ func RecordVisitor(c *gin.Context) {
 	result := db.Where(database.VisitorRecord{IP: clientIP, Date: today}).FirstOrCreate(&record, newRecord)
 
 	if result.Error != nil {
+		log.Printf("Database operation failed: %v", result.Error)
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Code:    500,
-			Message: "记录访问失败: " + result.Error.Error(),
+			Message: "记录访问失败",
 		})
 		return
 	}
 
+	log.Printf("Visitor recorded successfully: IP=%s, Date=%s", clientIP, today)
 	c.JSON(http.StatusOK, models.APIResponse{
 		Code:    200,
 		Message: "访问记录成功",
@@ -52,13 +89,16 @@ func RecordVisitor(c *gin.Context) {
 
 // GetVisitorStats 获取访问统计
 func GetVisitorStats(c *gin.Context) {
+	log.Printf("GetVisitorStats called")
+
 	today := time.Now().Format("2006-01-02")
 
 	db := database.GetDB()
 	if db == nil {
-		c.JSON(http.StatusInternalServerError, models.APIResponse{
-			Code:    500,
-			Message: "数据库连接失败",
+		log.Printf("Database connection is nil")
+		c.JSON(http.StatusServiceUnavailable, models.APIResponse{
+			Code:    503,
+			Message: "数据库服务暂时不可用",
 		})
 		return
 	}
@@ -66,9 +106,10 @@ func GetVisitorStats(c *gin.Context) {
 	// 统计今日访问人数
 	var count int64
 	if err := db.Model(&database.VisitorRecord{}).Where("date = ?", today).Count(&count).Error; err != nil {
+		log.Printf("Failed to get visitor stats: %v", err)
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Code:    500,
-			Message: "获取统计失败: " + err.Error(),
+			Message: "获取统计失败",
 		})
 		return
 	}
@@ -78,6 +119,7 @@ func GetVisitorStats(c *gin.Context) {
 		Date:          today,
 	}
 
+	log.Printf("Visitor stats retrieved: %d visitors today", count)
 	c.JSON(http.StatusOK, models.APIResponse{
 		Code:    200,
 		Message: "获取统计成功",
@@ -87,11 +129,14 @@ func GetVisitorStats(c *gin.Context) {
 
 // GetTotalVisitors 获取总访问人数
 func GetTotalVisitors(c *gin.Context) {
+	log.Printf("GetTotalVisitors called")
+
 	db := database.GetDB()
 	if db == nil {
-		c.JSON(http.StatusInternalServerError, models.APIResponse{
-			Code:    500,
-			Message: "数据库连接失败",
+		log.Printf("Database connection is nil")
+		c.JSON(http.StatusServiceUnavailable, models.APIResponse{
+			Code:    503,
+			Message: "数据库服务暂时不可用",
 		})
 		return
 	}
@@ -99,13 +144,15 @@ func GetTotalVisitors(c *gin.Context) {
 	// 统计总访问人数（去重IP）
 	var count int64
 	if err := db.Model(&database.VisitorRecord{}).Distinct("ip").Count(&count).Error; err != nil {
+		log.Printf("Failed to get total visitors: %v", err)
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Code:    500,
-			Message: "获取总人数失败: " + err.Error(),
+			Message: "获取总人数失败",
 		})
 		return
 	}
 
+	log.Printf("Total visitors retrieved: %d unique visitors", count)
 	c.JSON(http.StatusOK, models.APIResponse{
 		Code:    200,
 		Message: "获取总人数成功",
@@ -126,5 +173,11 @@ func getClientIP(c *gin.Context) string {
 	if clientIP == "" {
 		clientIP = c.ClientIP()
 	}
+
+	// 如果仍然为空，使用默认值
+	if clientIP == "" {
+		clientIP = "unknown"
+	}
+
 	return clientIP
 }

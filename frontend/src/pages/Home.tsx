@@ -12,30 +12,55 @@ const { Title, Paragraph } = Typography;
 const Home: React.FC = () => {
   const [visitorStats, setVisitorStats] = useState<VisitorStats | null>(null);
   const [totalVisitors, setTotalVisitors] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasRecorded, setHasRecorded] = useState(false); // 添加记录状态
   const [floatPosition, setFloatPosition] = useState({ x: window.innerWidth - 180, y: window.innerHeight - 100 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const floatRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // 防止重复调用
+    if (hasRecorded || isLoading) {
+      return;
+    }
+
     // 记录访问并获取统计数据
     const recordAndGetStats = async () => {
+      setIsLoading(true);
       try {
         // 记录当前访问
         await statsApi.recordVisitor();
+        setHasRecorded(true); // 标记已记录
+        
         // 获取统计数据
-        const stats = await statsApi.getVisitorStats();
+        const [stats, total] = await Promise.all([
+          statsApi.getVisitorStats(),
+          statsApi.getTotalVisitors()
+        ]);
+        
         setVisitorStats(stats);
-        // 获取总人数
-        const total = await statsApi.getTotalVisitors();
         setTotalVisitors(total);
       } catch (error) {
         console.error('获取访问统计失败:', error);
+        // 如果是网络错误或服务不可用，不要重试
+        if (error instanceof Error && error.message.includes('500')) {
+          console.log('服务器内部错误，跳过统计功能');
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    recordAndGetStats();
-  }, []);
+    // 添加延迟，避免组件快速重新挂载时的重复调用
+    const timer = setTimeout(() => {
+      recordAndGetStats();
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []); // 空依赖数组，只在组件挂载时执行一次
 
   // 拖拽开始
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -265,7 +290,7 @@ const Home: React.FC = () => {
       </div>
       
       {/* 访问统计显示 */}
-      {visitorStats && (
+      {(visitorStats || isLoading) && (
         <div 
           ref={floatRef}
           style={{
@@ -289,12 +314,18 @@ const Home: React.FC = () => {
           }}
           onMouseDown={handleMouseDown}
         >
-          <div style={{ marginBottom: '4px' }}>
-            今日服务: {visitorStats.todayVisitors}人
-          </div>
-          <div>
-            累计: {totalVisitors} 人
-          </div>
+          {isLoading ? (
+            <div>加载统计中...</div>
+          ) : visitorStats ? (
+            <>
+              <div style={{ marginBottom: '4px' }}>
+                今日服务: {visitorStats.todayVisitors}人
+              </div>
+              <div>
+                累计: {totalVisitors} 人
+              </div>
+            </>
+          ) : null}
         </div>
       )}
     </div>

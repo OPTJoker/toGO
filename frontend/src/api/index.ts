@@ -19,6 +19,14 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     console.error('API Error:', error);
+    
+    // 如果是网络错误或500错误，添加更详细的日志
+    if (error.response?.status === 500) {
+      console.error('服务器内部错误:', error.response.data);
+    } else if (error.code === 'NETWORK_ERROR') {
+      console.error('网络连接错误');
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -97,21 +105,64 @@ export const qrcodeApi = {
 
 // 访问统计 API
 export const statsApi = {
-  // 记录访问者
-  recordVisitor: async (): Promise<void> => {
-    await api.post('/stats/record');
+  // 记录访问者 - 添加重试机制
+  recordVisitor: async (retryCount = 0): Promise<void> => {
+    try {
+      await api.post('/stats/record');
+    } catch (error: any) {
+      console.error('记录访问失败:', error);
+      
+      // 如果是500错误且重试次数少于2次，则重试
+      if (error.response?.status === 500 && retryCount < 2) {
+        console.log(`重试记录访问 (${retryCount + 1}/2)`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // 递增延迟
+        return statsApi.recordVisitor(retryCount + 1);
+      }
+      
+      // 如果是503服务不可用，直接抛出错误但不重试
+      if (error.response?.status === 503) {
+        throw new Error('统计服务暂时不可用');
+      }
+      
+      throw error;
+    }
   },
 
   // 获取访问统计
   getVisitorStats: async (): Promise<VisitorStats> => {
-    const response: ApiResponse<VisitorStats> = await api.get('/stats/visitors');
-    return response.data;
+    try {
+      const response: ApiResponse<VisitorStats> = await api.get('/stats/visitors');
+      return response.data;
+    } catch (error: any) {
+      console.error('获取访问统计失败:', error);
+      
+      // 如果是503服务不可用，返回默认值
+      if (error.response?.status === 503) {
+        return {
+          todayVisitors: 0,
+          date: new Date().toISOString().split('T')[0]
+        };
+      }
+      
+      throw error;
+    }
   },
 
   // 获取总访问人数
   getTotalVisitors: async (): Promise<number> => {
-    const response: ApiResponse<{totalVisitors: number}> = await api.get('/stats/total');
-    return response.data.totalVisitors;
+    try {
+      const response: ApiResponse<{totalVisitors: number}> = await api.get('/stats/total');
+      return response.data.totalVisitors;
+    } catch (error: any) {
+      console.error('获取总访问人数失败:', error);
+      
+      // 如果是503服务不可用，返回默认值
+      if (error.response?.status === 503) {
+        return 0;
+      }
+      
+      throw error;
+    }
   },
 };
 
