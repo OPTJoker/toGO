@@ -10,6 +10,7 @@ import {
   ClearOutlined,
   CheckOutlined
 } from '@ant-design/icons';
+import JsonView from '@uiw/react-json-view';
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -22,6 +23,8 @@ const JsonFormatter: React.FC = () => {
   const [indentSize, setIndentSize] = useState(2);
   const [copied, setCopied] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [viewMode, setViewMode] = useState<'tree' | 'code'>('tree');
+  const [parsedJson, setParsedJson] = useState<any>(null);
 
   // 格式化 JSON
   const formatJson = () => {
@@ -45,15 +48,18 @@ const JsonFormatter: React.FC = () => {
   React.useEffect(() => {
     if (!inputJson.trim()) {
       setOutputJson('');
+      setParsedJson(null);
       setJsonError(null);
       return;
     }
     try {
       const parsed = JSON.parse(inputJson);
       setOutputJson(JSON.stringify(parsed, null, indentSize));
+      setParsedJson(parsed);
       setJsonError(null);
     } catch (err: any) {
       setOutputJson('');
+      setParsedJson(null);
       setJsonError(err.message || 'JSON解析错误');
     }
   }, [inputJson, indentSize]);
@@ -267,6 +273,22 @@ const JsonFormatter: React.FC = () => {
                 title="输出结果"
                 extra={
                   <Space>
+                    {/* 视图模式切换按钮 */}
+                    <Button.Group size="small">
+                      <Button 
+                        type={viewMode === 'tree' ? 'primary' : 'default'}
+                        onClick={() => setViewMode('tree')}
+                      >
+                        树形视图
+                      </Button>
+                      <Button 
+                        type={viewMode === 'code' ? 'primary' : 'default'}
+                        onClick={() => setViewMode('code')}
+                      >
+                        代码视图
+                      </Button>
+                    </Button.Group>
+                    
                     {/* 状态互斥按钮：格式化/压缩 */}
                     {(() => {
                       // 判断当前 outputJson 是否为压缩状态（无换行/无缩进）
@@ -405,54 +427,75 @@ const JsonFormatter: React.FC = () => {
                       whiteSpace: 'pre-wrap',
                       wordBreak: 'break-all',
                     }}>
-                      {/* 强制加粗、无阴影、自动换行所有高亮内容 */}
-                      <style>{`
-                        .hljs, .hljs * {
-                          font-weight: bold !important;
-                          font-family: inherit !important;
-                          text-shadow: none !important;
-                          word-break: break-all !important;
-                          white-space: pre-wrap !important;
-                        }
-                      `}</style>
-                      <SyntaxHighlighter
-                        language="json"
-                        style={{
-                          ...dracula,
-                          'hljs': {
-                            ...dracula.hljs,
+                      {viewMode === 'tree' && parsedJson ? (
+                        // 树形视图
+                        <JsonView 
+                          value={parsedJson}
+                          style={{
+                            minHeight: fullscreen ? '100vh' : '640px',
+                            fontSize: '16px',
+                            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace',
                             background: '#fff',
-                            color: '#0d47a1', // 深蓝色
-                            fontWeight: 'bold',
-                            textAlign: 'left',
-                            boxShadow: 'none',
-                            textShadow: 'none',
-                          },
-                          'string': { color: '#1b5e20', fontWeight: 'bold', textShadow: 'none' }, // 深绿色
-                          'number': { color: '#ad1457', fontWeight: 'bold', textShadow: 'none' }, // 深粉色
-                          'key': { color: '#0d47a1', fontWeight: 'bold', textShadow: 'none' }, // 深蓝色
-                          'punctuation': { color: '#222', fontWeight: 'bold', textShadow: 'none' },
-                          'attr': { color: '#222', fontWeight: 'bold', textShadow: 'none' }, // 属性名冒号
-                          'operator': { color: '#222', fontWeight: 'bold', textShadow: 'none' }, // 冒号
-                        }}
-                        customStyle={{
-                          minHeight: fullscreen ? '100vh' : '640px',
-                          fontSize: '16px',
-                          margin: 0,
-                          borderRadius: 8,
-                          background: '#fff',
-                          fontWeight: 'bold',
-                          textAlign: 'left',
-                          boxShadow: 'none',
-                          textShadow: 'none',
-                          whiteSpace: 'pre-wrap',
-                          wordBreak: 'break-all',
-                        }}
-                        wrapLines={true}
-                        lineProps={{ style: { whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }}
-                      >
-                        {outputJson || '// 格式化后的JSON将显示在这里...'}
-                      </SyntaxHighlighter>
+                            padding: '16px',
+                            borderRadius: '8px',
+                          }}
+                          collapsed={2} // 默认展开2层
+                          displayDataTypes={false}
+                          displayObjectSize={false}
+                          enableClipboard={false}
+                        />
+                      ) : (
+                        // 代码视图（原有的语法高亮）
+                        <>
+                          <style>{`
+                            .hljs, .hljs * {
+                              font-weight: bold !important;
+                              font-family: inherit !important;
+                              text-shadow: none !important;
+                              word-break: break-all !important;
+                              white-space: pre-wrap !important;
+                            }
+                          `}</style>
+                          <SyntaxHighlighter
+                            language="json"
+                            style={{
+                              ...dracula,
+                              'hljs': {
+                                ...dracula.hljs,
+                                background: '#fff',
+                                color: '#0d47a1',
+                                fontWeight: 'bold',
+                                textAlign: 'left',
+                                boxShadow: 'none',
+                                textShadow: 'none',
+                              },
+                              'string': { color: '#1b5e20', fontWeight: 'bold', textShadow: 'none' },
+                              'number': { color: '#ad1457', fontWeight: 'bold', textShadow: 'none' },
+                              'key': { color: '#0d47a1', fontWeight: 'bold', textShadow: 'none' },
+                              'punctuation': { color: '#222', fontWeight: 'bold', textShadow: 'none' },
+                              'attr': { color: '#222', fontWeight: 'bold', textShadow: 'none' },
+                              'operator': { color: '#222', fontWeight: 'bold', textShadow: 'none' },
+                            }}
+                            customStyle={{
+                              minHeight: fullscreen ? '100vh' : '640px',
+                              fontSize: '16px',
+                              margin: 0,
+                              borderRadius: 8,
+                              background: '#fff',
+                              fontWeight: 'bold',
+                              textAlign: 'left',
+                              boxShadow: 'none',
+                              textShadow: 'none',
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-all',
+                            }}
+                            wrapLines={true}
+                            lineProps={{ style: { whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }}
+                          >
+                            {outputJson || '// 格式化后的JSON将显示在这里...'}
+                          </SyntaxHighlighter>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
