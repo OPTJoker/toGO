@@ -95,15 +95,15 @@ if command -v mysql > /dev/null 2>&1; then
     DB_NAME=${DB_NAME:-toGO}
     
     log_info "测试数据库连接..."
-    if mysql -h$DB_HOST -P$DB_PORT -u$DB_USER -e "SELECT 1;" > /dev/null 2>&1; then
+    if mysql -h$DB_HOST -P$DB_PORT -u$DB_USER -p -e "SELECT 1;" > /dev/null 2>&1; then
         log_success "数据库连接正常"
         
         # 检查数据库是否存在
-        if mysql -h$DB_HOST -P$DB_PORT -u$DB_USER -e "USE $DB_NAME;" > /dev/null 2>&1; then
+        if mysql -h$DB_HOST -P$DB_PORT -u$DB_USER -p -e "USE $DB_NAME;" > /dev/null 2>&1; then
             log_success "数据库 $DB_NAME 存在"
         else
             log_warning "数据库 $DB_NAME 不存在，尝试创建..."
-            mysql -h$DB_HOST -P$DB_PORT -u$DB_USER -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;"
+            mysql -h$DB_HOST -P$DB_PORT -u$DB_USER -p -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;"
             if [ $? -eq 0 ]; then
                 log_success "数据库 $DB_NAME 创建成功"
             else
