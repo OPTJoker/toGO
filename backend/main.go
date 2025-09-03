@@ -33,7 +33,15 @@ func main() {
 
 	// 配置CORS
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:5173", "http://localhost:3000"}
+	config.AllowOrigins = []string{
+		"http://localhost:5173",
+		"http://localhost:3000",
+		"http://tugou.site",
+		"https://tugou.site",
+		"http://www.tugou.site",
+		"https://www.tugou.site",
+		"http://101.126.6.243",
+	}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
 	config.AllowCredentials = true
@@ -62,6 +70,24 @@ func main() {
 	// API路由组
 	api := r.Group("/api")
 	{
+		// API根路径信息
+		api.GET("/", func(c *gin.Context) {
+			c.JSON(http.StatusOK, models.APIResponse{
+				Code:    200,
+				Message: "toGO API Service",
+				Data: gin.H{
+					"version": "1.0.0",
+					"endpoints": gin.H{
+						"health":   "/api/health",
+						"video":    "/api/video/*",
+						"compress": "/api/compress/*",
+						"qrcode":   "/api/qrcode/*",
+						"stats":    "/api/stats/*",
+					},
+				},
+			})
+		})
+
 		// 系统监控路由
 		api.GET("/health", handlers.HealthCheck)
 		api.POST("/cleanup", handlers.ForceCleanup)
