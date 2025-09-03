@@ -4,8 +4,6 @@
 
 set -e
 
-ESCAPE=true # 是否跳过环境配置，默认跳过
-DB_ESCAPE=true # 是否跳过数据库创建，默认跳过
 
 # 项目配置
 DomainIP="101.126.6.243"
@@ -37,11 +35,13 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# 是否跳过环境配置，默认跳过
 ESCAPE() {
-    !$ESCAPE;
+    return 0; 
 }
+# 是否跳过数据库创建，默认跳过
 DB_ESCAPE() {
-    !$DB_ESCAPE;
+    return 0;
 }
 
 # 1. 安装必要的依赖
@@ -333,18 +333,21 @@ server {
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         
-        # 添加CORS头支持
-        add_header Access-Control-Allow-Origin *;
-        add_header Access-Control-Allow-Methods "GET, OPTIONS";
-        add_header Access-Control-Allow-Headers "Origin, Content-Type, Accept, Authorization";
-        
         # 处理预检请求
         if (\$request_method = 'OPTIONS') {
             add_header Access-Control-Allow-Origin *;
-            add_header Access-Control-Allow-Methods "GET, OPTIONS";
+            add_header Access-Control-Allow-Methods "GET, HEAD, OPTIONS";
             add_header Access-Control-Allow-Headers "Origin, Content-Type, Accept, Authorization";
+            add_header Access-Control-Max-Age 86400;
+            add_header Content-Length 0;
+            add_header Content-Type text/plain;
             return 204;
         }
+        
+        # 添加CORS头支持（仅对非OPTIONS请求）
+        add_header Access-Control-Allow-Origin * always;
+        add_header Access-Control-Allow-Methods "GET, HEAD, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Origin, Content-Type, Accept, Authorization" always;
         
         expires 1d;
         add_header Cache-Control "public, immutable";
