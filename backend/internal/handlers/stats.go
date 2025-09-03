@@ -78,27 +78,39 @@ func RecordVisitor(c *gin.Context) {
 		return
 	}
 
-	// 直接尝试创建记录，如果违反唯一约束则忽略错误
-	newRecord := database.VisitorRecord{
-		IP:        clientIP,
-		UserAgent: userAgent,
-		Date:      today,
-	}
+	// 先检查是否已存在相同IP的记录（查询所有历史记录）
+	var existingRecord database.VisitorRecord
+	result := db.Where("ip = ?", clientIP).First(&existingRecord)
 
-	// 使用FirstOrCreate来避免重复插入
-	var record database.VisitorRecord
-	result := db.Where(database.VisitorRecord{IP: clientIP, Date: today}).FirstOrCreate(&record, newRecord)
+	if result.Error == nil {
+		// IP已存在于历史记录中，不重复记录
+		log.Printf("Visitor IP already exists in history: IP=%s, first recorded on %s", clientIP, existingRecord.Date)
+	} else if result.Error == gorm.ErrRecordNotFound {
+		// IP不存在，创建新记录
+		newRecord := database.VisitorRecord{
+			IP:        clientIP,
+			UserAgent: userAgent,
+			Date:      today,
+		}
 
-	if result.Error != nil {
-		log.Printf("Database operation failed: %v", result.Error)
+		if err := db.Create(&newRecord).Error; err != nil {
+			log.Printf("Failed to create visitor record: %v", err)
+			c.JSON(http.StatusInternalServerError, models.APIResponse{
+				Code:    500,
+				Message: "记录访问失败",
+			})
+			return
+		}
+		log.Printf("New visitor record created: IP=%s, Date=%s", clientIP, today)
+	} else {
+		// 其他数据库错误
+		log.Printf("Database query failed: %v", result.Error)
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Code:    500,
 			Message: "记录访问失败",
 		})
 		return
 	}
-
-	log.Printf("Visitor recorded successfully: IP=%s, Date=%s", clientIP, today)
 	c.JSON(http.StatusOK, models.APIResponse{
 		Code:    200,
 		Message: "访问记录成功",
