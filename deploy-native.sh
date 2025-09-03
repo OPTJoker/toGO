@@ -8,8 +8,10 @@ ESCAPE=true # 是否跳过环境配置，默认跳过
 DB_ESCAPE=true # 是否跳过数据库创建，默认跳过
 
 # 项目配置
+DomainIP="101.126.6.243"
+
 PROJECT_NAME=togo
-REMOTE_HOST=101.126.6.243
+REMOTE_HOST=DomainIP
 MYSQL_DB_NAME=toGO  # 修改为toGO数据库名
 MYSQL_DB_PW=root123456  # 请修改为实际的MySQL root密码
 SERVICE_USER=togo
@@ -290,14 +292,12 @@ SyslogIdentifier=togo-backend
 
 [Install]
 WantedBy=multi-user.target
-EOF
-
 # 11. 配置Nginx - 增强版
 echo -e "${BLUE}🌐 配置Nginx...${NC}"
 cat > /etc/nginx/sites-available/togo << EOF
 server {
     listen 80;
-    server_name _;
+    server_name tugou.site www.tugou.site ${REMOTE_HOST} _;
     
     client_max_body_size 100M;
     
@@ -340,6 +340,8 @@ server {
         return 200 "healthy\n";
         add_header Content-Type text/plain;
     }
+}
+EOF
 }
 EOF
 
