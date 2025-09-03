@@ -118,7 +118,7 @@ const Home: React.FC = () => {
   };
 
   const getIcon = (iconName: string) => {
-    const Icon = (Icons as Record<string, React.ComponentType<any>>)[iconName];
+    const Icon = (Icons as unknown as Record<string, React.ComponentType<any>>)[iconName];
     return Icon ? <Icon style={{ fontSize: '28px', color: '#495057' }} /> : null;
   };
 

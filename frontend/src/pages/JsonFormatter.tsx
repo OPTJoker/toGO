@@ -555,23 +555,23 @@ const JsonFormatter: React.FC = () => {
                       whiteSpace: 'pre-wrap',
                       wordBreak: 'break-all',
                     }}>
-                      {viewMode === 'tree' && parsedJson ? (
+                      {viewMode === 'tree' && parsedJson !== null ? (
                         // 树形视图
-                        <JsonView 
-                          value={parsedJson}
-                          style={{
-                            minHeight: fullscreen ? '100vh' : '640px',
-                            fontSize: '16px',
-                            fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace',
-                            background: '#fff',
-                            padding: '16px',
-                            borderRadius: '8px',
-                          }}
-                          collapsed={collapsed} // 使用状态控制展开/收起
-                          displayDataTypes={false}
-                          displayObjectSize={false}
-                          enableClipboard={false}
-                        />
+                        <div style={{ 
+                          padding: '16px',
+                          background: '#f8f9fa',
+                          borderRadius: '6px',
+                          fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace',
+                          fontSize: '14px',
+                          lineHeight: '1.5',
+                          overflow: 'auto',
+                          maxHeight: fullscreen ? 'calc(100vh - 100px)' : '600px',
+                          minHeight: fullscreen ? 'calc(100vh - 100px)' : '640px'
+                        }}>
+                          <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                            {JSON.stringify(parsedJson, null, 2)}
+                          </pre>
+                        </div>
                       ) : (
                         // 代码视图（原有的语法高亮）
                         <>
