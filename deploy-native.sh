@@ -38,16 +38,16 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 ESCAPE() {
-    return $ESCAPE;
+    return !$ESCAPE;
 }
 DB_ESCAPE() {
-    return $DB_ESCAPE;
+    return !$DB_ESCAPE;
 }
 
 # 1. 安装必要的依赖
-$ESCAPE && echo -e "${BLUE}📦 安装系统依赖...${NC}"
-$ESCAPE && apt update
-$ESCAPE && apt install -y curl wget git nginx mysql-client build-essential ffmpeg netcat-openbsd
+ESCAPE && echo -e "${BLUE}📦 安装系统依赖...${NC}"
+ESCAPE && apt update
+ESCAPE && apt install -y curl wget git nginx mysql-client build-essential ffmpeg netcat-openbsd
 
 # 2. 安装Go (如果未安装) - 增强版
 install_go() {
@@ -116,8 +116,8 @@ install_nodejs() {
 }
 
 # 调用安装函数
-$ESCAPE && install_go
-$ESCAPE && install_nodejs
+ESCAPE && install_go
+ESCAPE && install_nodejs
 
 # 4. 创建服务用户
 echo -e "${BLUE}👤 创建服务用户...${NC}"
@@ -177,7 +177,7 @@ create_toGO_db() {
         exit 1
     }
 }
-$DB_ESCAPE && create_toGO_db
+DB_ESCAPE && create_toGO_db
 
 # 7. 构建后端 - 增强版
 echo -e "${BLUE}🔨 构建后端应用...${NC}"
