@@ -101,7 +101,7 @@ fi
 
 echo ""
 echo -e "${GREEN}🎉 后端服务重新部署完成！${NC}"
-echo -e "${BLUE}📍 现在支持以下域名的CORS访问:${NC}"
+echo -e "${BLUE}📍 支持以下域名的访问:${NC}"
 echo "  http://tugou.site"
 echo "  https://tugou.site"
 echo "  http://www.tugou.site"
