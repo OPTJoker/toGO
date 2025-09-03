@@ -38,10 +38,10 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 ESCAPE() {
-    return !$ESCAPE;
+    !$ESCAPE;
 }
 DB_ESCAPE() {
-    return !$DB_ESCAPE;
+    !$DB_ESCAPE;
 }
 
 # 1. 安装必要的依赖
@@ -356,8 +356,6 @@ server {
         return 200 "healthy\n";
         add_header Content-Type text/plain;
     }
-}
-EOF
 }
 EOF
 
