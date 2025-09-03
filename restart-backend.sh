@@ -10,7 +10,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[1;34m'
 NC='\033[0m'
 
-echo -e "${BLUE}🔄 重新部署后端服务以修复CORS问题...${NC}"
+echo -e "${BLUE}🔄 重新部署后端服务中...${NC}"
 
 # 检查是否为root用户
 if [ "$EUID" -ne 0 ]; then
@@ -64,27 +64,6 @@ cd ..
 
 echo -e "${GREEN}✅ 后端构建完成${NC}"
 
-echo -e "${BLUE}🔧 更新systemd服务配置...${NC}"
-# 更新systemd服务文件以包含新的环境变量
-cat > /etc/systemd/system/togo-backend.service << EOF
-[Unit]
-Description=ToGo Backend Service
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=$INSTALL_DIR
-ExecStart=$INSTALL_DIR/main
-Restart=always
-RestartSec=5
-Environment=STATIC_DIR=/opt/togo/output
-Environment=UPLOAD_DIR=/opt/togo/uploads
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
 # 重新加载systemd配置
 systemctl daemon-reload
 
@@ -129,7 +108,5 @@ echo "  http://www.tugou.site"
 echo "  https://www.tugou.site"
 echo "  http://101.126.6.243"
 echo ""
-echo -e "${BLUE}🔧 如果仍有CORS问题，请检查:${NC}"
-echo "1. 浏览器是否缓存了旧的CORS策略（尝试硬刷新 Ctrl+F5）"
-echo "2. 前端请求的域名是否与当前访问域名一致"
-echo "3. 查看后端日志: journalctl -u togo-backend -f"
+
+echo "  查看后端日志: journalctl -u togo-backend -f"
