@@ -34,7 +34,7 @@ const JsonFormatter: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [viewMode, setViewMode] = useState<'tree' | 'code'>('tree');
-  const [parsedJson, setParsedJson] = useState<any>(null);
+  const [parsedJson, setParsedJson] = useState<unknown>(null);
   const [collapsed, setCollapsed] = useState<boolean | number>(false); // false表示全展开，true表示全收起，数字表示展开层数
 
   // 添加全局样式来覆盖Ant Design的默认focus样式
@@ -88,10 +88,10 @@ const JsonFormatter: React.FC = () => {
       setOutputJson(JSON.stringify(parsed, null, indentSize));
       setParsedJson(parsed);
       setJsonError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setOutputJson('');
       setParsedJson(null);
-      setJsonError(err.message || 'JSON解析错误');
+      setJsonError((err as Error).message || 'JSON解析错误');
     }
   }, [inputJson, indentSize]);
 
@@ -174,7 +174,7 @@ const JsonFormatter: React.FC = () => {
         setTimeout(() => {
           document.body.removeChild(textArea);
         }, 5000);
-      } catch (fallbackError) {
+      } catch (_fallbackError) {
         message.error('复制功能不可用，请手动选择文本进行复制');
       }
     }
@@ -291,7 +291,7 @@ const JsonFormatter: React.FC = () => {
                   placeholder="请输入要处理的JSON数据..."
                   style={{ 
                     minHeight: '640px',
-                    fontFamily: 'Monaco, Menlo, \"Ubuntu Mono\", Consolas, source-code-pro, monospace',
+                    fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace',
                     fontSize: '15px'
                   }}
                 />

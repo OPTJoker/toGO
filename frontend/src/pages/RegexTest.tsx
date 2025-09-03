@@ -87,11 +87,11 @@ const RegexTest: React.FC = () => {
       setMatches(results);
       setIsValid(true);
       message.success(`匹配完成，找到 ${results.length} 个结果`);
-    } catch (error) {
+    } catch (_error) {
       setIsValid(false);
       setMatches([]);
       message.error('正则表达式语法错误');
-      console.error('Regex error:', error);
+      console.error('Regex error:', _error);
     }
   };
 
@@ -112,7 +112,7 @@ const RegexTest: React.FC = () => {
       message.success('匹配结果已复制到剪贴板');
       
       setTimeout(() => setCopied(false), 3000);
-    } catch (error) {
+    } catch (_error) {
       message.error('复制失败，请手动复制');
     }
   };

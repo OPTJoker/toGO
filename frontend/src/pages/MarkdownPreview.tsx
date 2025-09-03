@@ -92,7 +92,7 @@ function hello() {
     html = html.replace(/^---$/gim, '<hr>');
     
     // 无序列表
-    html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
+    html = html.replace(/^- (.*$)/gim, '<li>$1</li>');
     html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
     
     // 有序列表

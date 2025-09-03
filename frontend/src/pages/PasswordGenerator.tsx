@@ -15,10 +15,10 @@ const PasswordGenerator: React.FC = () => {
 
   const generatePassword = () => {
     let charset = '';
-    let uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
-    let numberChars = '0123456789';
-    let symbolChars = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+    const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
+    const numberChars = '0123456789';
+    const symbolChars = '!@#$%^&*()_+-=[]{}|;:,.<>?';
 
     // 排除相似字符
     if (excludeSimilar) {

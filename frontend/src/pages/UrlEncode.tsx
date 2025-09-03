@@ -29,9 +29,9 @@ const UrlEncode: React.FC = () => {
       const encoded = encodeURIComponent(inputText);
       setOutputText(encoded);
       message.success('URL编码成功');
-    } catch (error) {
+    } catch (_error) {
       message.error('编码失败，请检查输入内容');
-      console.error('URL encode error:', error);
+      console.error('URL encode error:', _error);
     }
   };
 
@@ -46,9 +46,9 @@ const UrlEncode: React.FC = () => {
       const decoded = decodeURIComponent(inputText);
       setOutputText(decoded);
       message.success('URL解码成功');
-    } catch (error) {
+    } catch (_error) {
       message.error('解码失败，请检查URL编码格式是否正确');
-      console.error('URL decode error:', error);
+      console.error('URL decode error:', _error);
     }
   };
 
@@ -116,9 +116,9 @@ const UrlEncode: React.FC = () => {
       
       setOutputText(processedLines.join('\n'));
       message.success(`批量处理完成，共处理${lines.length}行`);
-    } catch (error) {
+    } catch (_error) {
       message.error('批量处理失败');
-      console.error('Batch process error:', error);
+      console.error('Batch process error:', _error);
     }
   };
 

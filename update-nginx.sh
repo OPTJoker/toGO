@@ -67,16 +67,20 @@ server {
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         
-        # 添加CORS头支持
+        # 添加完善的CORS头支持
         add_header Access-Control-Allow-Origin *;
-        add_header Access-Control-Allow-Methods "GET, OPTIONS";
+        add_header Access-Control-Allow-Methods "GET, HEAD, OPTIONS";
         add_header Access-Control-Allow-Headers "Origin, Content-Type, Accept, Authorization";
+        add_header Access-Control-Max-Age 86400;
         
         # 处理预检请求
         if (\$request_method = 'OPTIONS') {
             add_header Access-Control-Allow-Origin *;
-            add_header Access-Control-Allow-Methods "GET, OPTIONS";
+            add_header Access-Control-Allow-Methods "GET, HEAD, OPTIONS";
             add_header Access-Control-Allow-Headers "Origin, Content-Type, Accept, Authorization";
+            add_header Access-Control-Max-Age 86400;
+            add_header Content-Length 0;
+            add_header Content-Type text/plain;
             return 204;
         }
         

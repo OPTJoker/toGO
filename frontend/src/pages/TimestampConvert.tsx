@@ -55,9 +55,9 @@ const TimestampConvert: React.FC = () => {
       setSelectedDate(momentDate);
       message.success('时间戳转换成功');
       return momentDate;
-    } catch (error) {
+    } catch (_error) {
       message.error('转换失败，请检查时间戳格式');
-      console.error('Timestamp convert error:', error);
+      console.error('Timestamp convert error:', _error);
       return null;
     }
   };
@@ -77,9 +77,9 @@ const TimestampConvert: React.FC = () => {
       setTimestamp(ts);
       message.success('日期转换成功');
       return ts;
-    } catch (error) {
+    } catch (_error) {
       message.error('转换失败');
-      console.error('Date convert error:', error);
+      console.error('Date convert error:', _error);
       return '';
     }
   };
@@ -109,7 +109,7 @@ const TimestampConvert: React.FC = () => {
       
       // 3秒后重置复制状态
       setTimeout(() => setCopied(''), 3000);
-    } catch (error) {
+    } catch (_error) {
       message.error('复制失败，请手动复制');
     }
   };
@@ -167,9 +167,9 @@ const TimestampConvert: React.FC = () => {
       }
 
       message.success(`批量转换完成，共处理${timestamps.length}个时间戳`);
-    } catch (error) {
+    } catch (_error) {
       message.error('批量转换失败');
-      console.error('Batch convert error:', error);
+      console.error('Batch convert error:', _error);
     }
   };
 

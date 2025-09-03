@@ -20,11 +20,6 @@ const Home: React.FC = () => {
   const floatRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // 防止重复调用
-    if (hasRecorded || isLoading) {
-      return;
-    }
-
     // 记录访问并获取统计数据
     const recordAndGetStats = async () => {
       setIsLoading(true);
@@ -52,6 +47,11 @@ const Home: React.FC = () => {
       }
     };
 
+    // 防止重复调用
+    if (hasRecorded || isLoading) {
+      return;
+    }
+
     // 添加延迟，避免组件快速重新挂载时的重复调用
     const timer = setTimeout(() => {
       recordAndGetStats();
@@ -60,7 +60,7 @@ const Home: React.FC = () => {
     return () => {
       clearTimeout(timer);
     };
-  }, []); // 空依赖数组，只在组件挂载时执行一次
+  }, [hasRecorded, isLoading]); // 添加依赖项
 
   // 拖拽开始
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -118,7 +118,7 @@ const Home: React.FC = () => {
   };
 
   const getIcon = (iconName: string) => {
-    const Icon = (Icons as any)[iconName];
+    const Icon = (Icons as Record<string, React.ComponentType<any>>)[iconName];
     return Icon ? <Icon style={{ fontSize: '28px', color: '#495057' }} /> : null;
   };
 

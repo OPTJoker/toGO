@@ -38,7 +38,8 @@ const ColorTool: React.FC = () => {
     b /= 255;
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
-    let h, s, l = (max + min) / 2;
+    let h, s;
+    const l = (max + min) / 2;
 
     if (max === min) {
       h = s = 0;
@@ -67,10 +68,11 @@ const ColorTool: React.FC = () => {
     b /= 255;
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
-    let h, s, v = max;
+    let h;
+    const s = max === 0 ? 0 : (max - min) / max;
+    const v = max;
 
     const d = max - min;
-    s = max === 0 ? 0 : d / max;
 
     if (max === min) {
       h = 0;
@@ -128,7 +130,7 @@ const ColorTool: React.FC = () => {
 
   useEffect(() => {
     updateColorInfo(color);
-  }, [color]);
+  }, [color, updateColorInfo]);
 
   const copyToClipboard = (text: string, format: string) => {
     navigator.clipboard.writeText(text).then(() => {

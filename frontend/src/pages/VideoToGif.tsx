@@ -185,30 +185,44 @@ const VideoToGif: React.FC = () => {
       });
       
       message.success('转换成功！');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('转换失败:', error);
       
-      // 显示更详细的错误信息
       let errorMessage = '转换失败，请重试';
       
-      if (error.response) {
-        // 服务器返回错误响应
-        console.error('Error response:', error.response.data);
-        if (error.response.data?.message) {
-          errorMessage = `转换失败: ${error.response.data.message}`;
-        } else if (error.response.status === 500) {
-          errorMessage = '服务器内部错误，请检查视频文件格式';
-        } else if (error.response.status === 413) {
+      if (error instanceof Error) {
+        // 处理具体的错误类型
+        if (error.message.includes('413')) {
           errorMessage = '文件太大，请选择较小的视频文件';
+        } else if (error.message.includes('500')) {
+          errorMessage = '服务器内部错误，请检查视频文件格式';
+        } else {
+          errorMessage = `错误: ${error.message}`;
         }
-      } else if (error.request) {
-        // 网络错误
-        console.error('Network error:', error.request);
-        errorMessage = '网络连接失败，请检查网络连接或确保后端服务正在运行';
-      } else {
-        // 其他错误
-        console.error('Error:', error.message);
-        errorMessage = `错误: ${error.message}`;
+      } else if (typeof error === 'object' && error !== null && 'response' in error) {
+        const axiosError = error as { 
+          response?: { 
+            status?: number; 
+            data?: { message?: string } 
+          };
+          request?: any;
+        };
+        
+        if (axiosError.response) {
+          // 服务器返回错误响应
+          console.error('Error response:', axiosError.response.data);
+          if (axiosError.response.data?.message) {
+            errorMessage = `转换失败: ${axiosError.response.data.message}`;
+          } else if (axiosError.response.status === 500) {
+            errorMessage = '服务器内部错误，请检查视频文件格式';
+          } else if (axiosError.response.status === 413) {
+            errorMessage = '文件太大，请选择较小的视频文件';
+          }
+        } else if (axiosError.request) {
+          // 网络错误
+          console.error('Network error:', axiosError.request);
+          errorMessage = '网络连接失败，请检查网络连接或确保后端服务正在运行';
+        }
       }
       
       alert(errorMessage);
@@ -460,7 +474,7 @@ const VideoToGif: React.FC = () => {
             >
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Image
-                  src={gifResult.url}
+                  src={buildStaticUrl(gifResult.url)}
                   alt="转换后的GIF"
                   style={{ width: '100%' }}
                   preview={{

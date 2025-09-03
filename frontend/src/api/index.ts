@@ -5,7 +5,8 @@ import type {
   VideoToGifResponse, 
   CompressionResponse,
   DecompressionResponse,
-  VisitorStats
+  VisitorStats,
+  SystemHealth
 } from '../types';
 import { API_CONFIG } from '../config';
 
@@ -163,6 +164,20 @@ export const statsApi = {
       
       throw error;
     }
+  },
+};
+
+// 系统监控 API
+export const systemApi = {
+  // 获取系统健康状态
+  getHealth: async (): Promise<SystemHealth> => {
+    const response: ApiResponse<SystemHealth> = await api.get('/health');
+    return response.data;
+  },
+
+  // 执行系统清理
+  cleanup: async (): Promise<void> => {
+    await api.post('/cleanup');
   },
 };
 

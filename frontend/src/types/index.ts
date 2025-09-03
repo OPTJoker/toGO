@@ -15,8 +15,19 @@ export interface ToolCategory {
   color: string;
 }
 
+// 系统健康状态接口
+export interface SystemHealth {
+  cpuUsage: number;
+  memoryUsage: number;
+  memoryTotal: number;
+  uploadsSize: number;
+  outputSize: number;
+  goroutines: number;
+  timestamp: string;
+}
+
 // API响应类型
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   code: number;
   message: string;
   data: T;

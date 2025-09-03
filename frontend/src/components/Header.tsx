@@ -42,7 +42,7 @@ const TogoTitle: React.FC<{ config: ResponsiveConfig; style?: React.CSSPropertie
     </Title>
 );
 
-const DogIntroText:String = '它的 「高贵」从不在所谓「纯血认证」的稀缺性里，而在它与中国人生存共生的千年价值中。\n它是本土自然演化的「活文化符号」，承载着农耕文明里看家护院、协助生产的实用使命。\n无需精心喂养，却能强健生长；不必刻意训练，却懂护主守家，这份 “接地气” 的可靠，是许多人工选育犬种难及的。';
+const DogIntroText:string = '它的 「高贵」从不在所谓「纯血认证」的稀缺性里，而在它与中国人生存共生的千年价值中。\n它是本土自然演化的「活文化符号」，承载着农耕文明里看家护院、协助生产的实用使命。\n无需精心喂养，却能强健生长；不必刻意训练，却懂护主守家，这份 “接地气” 的可靠，是许多人工选育犬种难及的。';
 
 const DogIntroCard: React.FC<{ config: ResponsiveConfig; style?: React.CSSProperties }> = ({ config, style }) => (
     <Card

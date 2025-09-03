@@ -18,7 +18,7 @@ import {
   WarningOutlined,
   CheckCircleOutlined
 } from '@ant-design/icons';
-import axios from 'axios';
+import { systemApi } from '../api';
 
 const { Title } = Typography;
 
@@ -40,8 +40,8 @@ const SystemMonitor: React.FC = () => {
   const loadSystemInfo = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/health');
-      setSystemInfo(response.data.data);
+      const data = await systemApi.getHealth();
+      setSystemInfo(data);
     } catch (error) {
       message.error('获取系统信息失败');
       console.error(error);
@@ -53,7 +53,7 @@ const SystemMonitor: React.FC = () => {
   const handleCleanup = async () => {
     setCleanupLoading(true);
     try {
-      await axios.post('/api/cleanup');
+      await systemApi.cleanup();
       message.success('清理完成');
       // 重新加载系统信息
       loadSystemInfo();

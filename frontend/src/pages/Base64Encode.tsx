@@ -31,9 +31,9 @@ const Base64Encode: React.FC = () => {
       const encoded = btoa(unescape(encodeURIComponent(inputText)));
       setOutputText(encoded);
       message.success('编码成功');
-    } catch (error) {
+    } catch (_error) {
       message.error('编码失败，请检查输入内容');
-      console.error('Base64 encode error:', error);
+      console.error('Base64 encode error:', _error);
     }
   };
 
@@ -48,9 +48,9 @@ const Base64Encode: React.FC = () => {
       const decoded = decodeURIComponent(escape(atob(inputText)));
       setOutputText(decoded);
       message.success('解码成功');
-    } catch (error) {
+    } catch (_error) {
       message.error('解码失败，请检查Base64格式是否正确');
-      console.error('Base64 decode error:', error);
+      console.error('Base64 decode error:', _error);
     }
   };
 
@@ -97,7 +97,7 @@ const Base64Encode: React.FC = () => {
       
       // 3秒后重置复制状态
       setTimeout(() => setCopied(false), 3000);
-    } catch (error) {
+    } catch (_error) {
       message.error('复制失败，请手动复制');
     }
   };
