@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"strconv"
 )
 
 // AppConfig 应用配置
@@ -87,11 +86,8 @@ func GetStaticURL() string {
 
 // BuildStaticURL 构建静态文件完整URL
 func BuildStaticURL(filename string) string {
-	staticURL := GetStaticURL()
-	if staticURL == "" {
-		return "/static/" + filename
-	}
-	return staticURL + "/" + filename
+	// 只返回文件名，让前端负责构建完整URL
+	return filename
 }
 
 // IsProduction 判断是否为生产环境
@@ -130,26 +126,6 @@ func GetUploadDir() string {
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
-	}
-	return defaultValue
-}
-
-// getEnvAsInt 获取环境变量并转换为int，如果不存在或转换失败则返回默认值
-func getEnvAsInt(key string, defaultValue int) int {
-	if value := os.Getenv(key); value != "" {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
-	}
-	return defaultValue
-}
-
-// getEnvAsBool 获取环境变量并转换为bool，如果不存在则返回默认值
-func getEnvAsBool(key string, defaultValue bool) bool {
-	if value := os.Getenv(key); value != "" {
-		if boolValue, err := strconv.ParseBool(value); err == nil {
-			return boolValue
-		}
 	}
 	return defaultValue
 }
