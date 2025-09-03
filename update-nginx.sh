@@ -66,6 +66,20 @@ server {
         proxy_pass http://127.0.0.1:8080/static/;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
+        
+        # 添加CORS头支持
+        add_header Access-Control-Allow-Origin *;
+        add_header Access-Control-Allow-Methods "GET, OPTIONS";
+        add_header Access-Control-Allow-Headers "Origin, Content-Type, Accept, Authorization";
+        
+        # 处理预检请求
+        if (\$request_method = 'OPTIONS') {
+            add_header Access-Control-Allow-Origin *;
+            add_header Access-Control-Allow-Methods "GET, OPTIONS";
+            add_header Access-Control-Allow-Headers "Origin, Content-Type, Accept, Authorization";
+            return 204;
+        }
+        
         expires 1d;
         add_header Cache-Control "public, immutable";
     }

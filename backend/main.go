@@ -58,8 +58,31 @@ func main() {
 	// 初始化清理服务
 	handlers.InitCleanupService("./uploads", "./output")
 
-	// 静态文件服务
-	r.Static("/static", "./output")
+	// 静态文件服务 - 添加CORS支持
+	r.GET("/static/*filepath", func(c *gin.Context) {
+		// 设置CORS头
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
+
+		// 处理预检请求
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		// 提供静态文件
+		filepath := c.Param("filepath")
+		c.File("./output" + filepath)
+	})
+
+	// 为OPTIONS请求添加专门的处理
+	r.OPTIONS("/static/*filepath", func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
+		c.AbortWithStatus(204)
+	})
 	r.GET("/", gin.HandlerFunc(func(c *gin.Context) {
 		c.JSON(http.StatusOK, models.APIResponse{
 			Code:    200,
