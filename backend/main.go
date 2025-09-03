@@ -59,10 +59,10 @@ func main() {
 	handlers.InitCleanupService(cfg.UploadDir, cfg.StaticDir)
 
 	// 静态文件服务 - 添加CORS支持
-	r.GET("/static/*filepath", func(c *gin.Context) {
+	staticHandler := func(c *gin.Context) {
 		// 设置CORS头
 		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
+		c.Header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
 
 		// 处理预检请求
@@ -74,12 +74,15 @@ func main() {
 		// 提供静态文件 - 使用配置中的路径
 		filepath := c.Param("filepath")
 		c.File(cfg.StaticDir + filepath)
-	})
+	}
+
+	r.GET("/static/*filepath", staticHandler)
+	r.HEAD("/static/*filepath", staticHandler)
 
 	// 为OPTIONS请求添加专门的处理
 	r.OPTIONS("/static/*filepath", func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
+		c.Header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
 		c.AbortWithStatus(204)
 	})
