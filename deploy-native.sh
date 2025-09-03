@@ -37,11 +37,11 @@ fi
 
 # 是否跳过环境配置，默认跳过
 ESCAPE() {
-    return 0; 
+    return false; 
 }
 # 是否跳过数据库创建，默认跳过
 DB_ESCAPE() {
-    return 0;
+    return false;
 }
 
 # 1. 安装必要的依赖
