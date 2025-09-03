@@ -11,7 +11,7 @@ DB_ESCAPE=true # 是否跳过数据库创建，默认跳过
 DomainIP="101.126.6.243"
 
 PROJECT_NAME=togo
-REMOTE_HOST=DomainIP
+REMOTE_HOST=$DomainIP  # 修复：使用变量值而不是字符串
 MYSQL_DB_NAME=toGO  # 修改为toGO数据库名
 MYSQL_DB_PW=root123456  # 请修改为实际的MySQL root密码
 SERVICE_USER=togo
@@ -45,9 +45,9 @@ DB_ESCAPE() {
 }
 
 # 1. 安装必要的依赖
-ESCAPE && echo -e "${BLUE}📦 安装系统依赖...${NC}"
-ESCAPE && apt update
-ESCAPE && apt install -y curl wget git nginx mysql-client build-essential ffmpeg netcat-openbsd
+$ESCAPE && echo -e "${BLUE}📦 安装系统依赖...${NC}"
+$ESCAPE && apt update
+$ESCAPE && apt install -y curl wget git nginx mysql-client build-essential ffmpeg netcat-openbsd
 
 # 2. 安装Go (如果未安装) - 增强版
 install_go() {
@@ -116,8 +116,8 @@ install_nodejs() {
 }
 
 # 调用安装函数
-ESCAPE && install_go
-ESCAPE && install_nodejs
+$ESCAPE && install_go
+$ESCAPE && install_nodejs
 
 # 4. 创建服务用户
 echo -e "${BLUE}👤 创建服务用户...${NC}"
@@ -177,7 +177,7 @@ create_toGO_db() {
         exit 1
     }
 }
-DB_ESCAPE && create_toGO_db
+$DB_ESCAPE && create_toGO_db
 
 # 7. 构建后端 - 增强版
 echo -e "${BLUE}🔨 构建后端应用...${NC}"
