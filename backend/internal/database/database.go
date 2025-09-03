@@ -14,13 +14,33 @@ import (
 
 var DB *gorm.DB
 
-// VisitorRecord 访问记录数据库模型
+// VisitorRecord 访问记录数据库模型 - 记录所有访问，不去重
 type VisitorRecord struct {
 	ID        uint   `gorm:"primaryKey"`
-	IP        string `gorm:"index;size:45;uniqueIndex:idx_ip_date"` // 与Date组成唯一索引
+	IP        string `gorm:"index;size:45"` // 移除唯一索引，允许重复记录
 	UserAgent string `gorm:"size:500"`
-	Date      string `gorm:"index;size:10;uniqueIndex:idx_ip_date"` // YYYY-MM-DD格式，与IP组成唯一索引
+	Date      string `gorm:"index;size:10"` // YYYY-MM-DD格式
 	CreatedAt int64  `gorm:"autoCreateTime"`
+}
+
+// VisitorStats 访问统计缓存表 - 用于性能优化
+type VisitorStats struct {
+	ID             uint   `gorm:"primaryKey"`
+	TotalUniqueIPs int    `gorm:"not null;default:0"`  // 总的唯一IP数量
+	TodayVisitors  int    `gorm:"not null;default:0"`  // 今日访问数
+	Date           string `gorm:"uniqueIndex;size:10"` // YYYY-MM-DD格式，每天一条记录
+	LastUpdated    int64  `gorm:"autoUpdateTime"`
+}
+
+// UniqueVisitor 唯一访客表 - 用于快速统计总人数
+type UniqueVisitor struct {
+	ID         uint   `gorm:"primaryKey"`
+	IP         string `gorm:"uniqueIndex;size:45"` // IP唯一索引
+	FirstSeen  string `gorm:"size:10"`             // 首次访问日期
+	LastSeen   string `gorm:"size:10"`             // 最后访问日期
+	VisitCount int    `gorm:"not null;default:1"`  // 访问次数
+	CreatedAt  int64  `gorm:"autoCreateTime"`
+	UpdatedAt  int64  `gorm:"autoUpdateTime"`
 }
 
 // InitDatabase 初始化数据库连接
@@ -62,7 +82,7 @@ func InitDatabase() error {
 	}
 
 	// 自动迁移数据库表
-	err = DB.AutoMigrate(&VisitorRecord{})
+	err = DB.AutoMigrate(&VisitorRecord{}, &VisitorStats{}, &UniqueVisitor{})
 	if err != nil {
 		return fmt.Errorf("failed to migrate database: %v", err)
 	}

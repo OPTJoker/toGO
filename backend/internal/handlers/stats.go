@@ -25,9 +25,8 @@ func tryReconnectDB() *gorm.DB {
 	return database.GetDB()
 }
 
-// RecordVisitor 记录访问者
+// RecordVisitor 记录访问者 - 优化版本
 func RecordVisitor(c *gin.Context) {
-	// 添加日志记录
 	log.Printf("RecordVisitor called from IP: %s", c.ClientIP())
 
 	clientIP := getClientIP(c)
@@ -46,7 +45,6 @@ func RecordVisitor(c *gin.Context) {
 
 	db := database.GetDB()
 	if db == nil || !database.IsDBConnected() {
-		// 尝试重连
 		db = tryReconnectDB()
 		if db == nil {
 			log.Printf("Database connection is nil - stats feature disabled")
@@ -58,7 +56,7 @@ func RecordVisitor(c *gin.Context) {
 		}
 	}
 
-	// 检查数据库连接是否正常
+	// 检查数据库连接
 	sqlDB, err := db.DB()
 	if err != nil {
 		log.Printf("Failed to get underlying sql.DB: %v", err)
@@ -78,32 +76,71 @@ func RecordVisitor(c *gin.Context) {
 		return
 	}
 
-	// 先检查是否已存在相同IP的记录（查询所有历史记录）
-	var existingRecord database.VisitorRecord
-	result := db.Where("ip = ?", clientIP).First(&existingRecord)
-
-	if result.Error == nil {
-		// IP已存在于历史记录中，不重复记录
-		log.Printf("Visitor IP already exists in history: IP=%s, first recorded on %s", clientIP, existingRecord.Date)
-	} else if result.Error == gorm.ErrRecordNotFound {
-		// IP不存在，创建新记录
-		newRecord := database.VisitorRecord{
-			IP:        clientIP,
-			UserAgent: userAgent,
-			Date:      today,
+	// 使用事务确保数据一致性
+	tx := db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
 		}
+	}()
 
-		if err := db.Create(&newRecord).Error; err != nil {
-			log.Printf("Failed to create visitor record: %v", err)
+	// 1. 插入访问记录（不去重，记录所有访问）
+	newRecord := database.VisitorRecord{
+		IP:        clientIP,
+		UserAgent: userAgent,
+		Date:      today,
+	}
+
+	if err := tx.Create(&newRecord).Error; err != nil {
+		tx.Rollback()
+		log.Printf("Failed to create visitor record: %v", err)
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Code:    500,
+			Message: "记录访问失败",
+		})
+		return
+	}
+
+	// 2. 更新或创建唯一访客记录
+	var uniqueVisitor database.UniqueVisitor
+	result := tx.Where("ip = ?", clientIP).First(&uniqueVisitor)
+
+	isNewVisitor := false
+	if result.Error == gorm.ErrRecordNotFound {
+		// 新访客
+		uniqueVisitor = database.UniqueVisitor{
+			IP:         clientIP,
+			FirstSeen:  today,
+			LastSeen:   today,
+			VisitCount: 1,
+		}
+		if err := tx.Create(&uniqueVisitor).Error; err != nil {
+			tx.Rollback()
+			log.Printf("Failed to create unique visitor: %v", err)
 			c.JSON(http.StatusInternalServerError, models.APIResponse{
 				Code:    500,
 				Message: "记录访问失败",
 			})
 			return
 		}
-		log.Printf("New visitor record created: IP=%s, Date=%s", clientIP, today)
+		isNewVisitor = true
+		log.Printf("New unique visitor: IP=%s", clientIP)
+	} else if result.Error == nil {
+		// 老访客，更新记录
+		uniqueVisitor.LastSeen = today
+		uniqueVisitor.VisitCount++
+		if err := tx.Save(&uniqueVisitor).Error; err != nil {
+			tx.Rollback()
+			log.Printf("Failed to update unique visitor: %v", err)
+			c.JSON(http.StatusInternalServerError, models.APIResponse{
+				Code:    500,
+				Message: "记录访问失败",
+			})
+			return
+		}
+		log.Printf("Updated visitor: IP=%s, total visits=%d", clientIP, uniqueVisitor.VisitCount)
 	} else {
-		// 其他数据库错误
+		tx.Rollback()
 		log.Printf("Database query failed: %v", result.Error)
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Code:    500,
@@ -111,13 +148,75 @@ func RecordVisitor(c *gin.Context) {
 		})
 		return
 	}
+
+	// 3. 更新今日统计
+	var todayStats database.VisitorStats
+	statsResult := tx.Where("date = ?", today).First(&todayStats)
+
+	if statsResult.Error == gorm.ErrRecordNotFound {
+		// 创建今日统计记录
+		totalUniqueIPs := int64(0)
+		tx.Model(&database.UniqueVisitor{}).Count(&totalUniqueIPs)
+
+		todayVisitors := int64(0)
+		tx.Model(&database.VisitorRecord{}).Where("date = ?", today).Count(&todayVisitors)
+
+		todayStats = database.VisitorStats{
+			TotalUniqueIPs: int(totalUniqueIPs),
+			TodayVisitors:  int(todayVisitors),
+			Date:           today,
+		}
+		if err := tx.Create(&todayStats).Error; err != nil {
+			tx.Rollback()
+			log.Printf("Failed to create today stats: %v", err)
+			c.JSON(http.StatusInternalServerError, models.APIResponse{
+				Code:    500,
+				Message: "记录访问失败",
+			})
+			return
+		}
+	} else if statsResult.Error == nil {
+		// 更新今日统计
+		todayStats.TodayVisitors++
+		if isNewVisitor {
+			todayStats.TotalUniqueIPs++
+		}
+		if err := tx.Save(&todayStats).Error; err != nil {
+			tx.Rollback()
+			log.Printf("Failed to update today stats: %v", err)
+			c.JSON(http.StatusInternalServerError, models.APIResponse{
+				Code:    500,
+				Message: "记录访问失败",
+			})
+			return
+		}
+	} else {
+		tx.Rollback()
+		log.Printf("Failed to query today stats: %v", statsResult.Error)
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Code:    500,
+			Message: "记录访问失败",
+		})
+		return
+	}
+
+	// 提交事务
+	if err := tx.Commit().Error; err != nil {
+		log.Printf("Failed to commit transaction: %v", err)
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Code:    500,
+			Message: "记录访问失败",
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, models.APIResponse{
 		Code:    200,
 		Message: "访问记录成功",
 	})
 }
 
-// GetVisitorStats 获取访问统计
+// GetVisitorStats 获取访问统计 - 优化版本
 func GetVisitorStats(c *gin.Context) {
 	log.Printf("GetVisitorStats called")
 
@@ -125,7 +224,6 @@ func GetVisitorStats(c *gin.Context) {
 
 	db := database.GetDB()
 	if db == nil || !database.IsDBConnected() {
-		// 尝试重连
 		db = tryReconnectDB()
 		if db == nil {
 			log.Printf("Database connection is nil - returning default stats")
@@ -142,7 +240,7 @@ func GetVisitorStats(c *gin.Context) {
 		}
 	}
 
-	// 检查数据库连接是否正常
+	// 检查数据库连接
 	sqlDB, err := db.DB()
 	if err != nil {
 		log.Printf("Failed to get underlying sql.DB: %v", err)
@@ -172,10 +270,38 @@ func GetVisitorStats(c *gin.Context) {
 		return
 	}
 
-	// 统计今日访问人数
-	var count int64
-	if err := db.Model(&database.VisitorRecord{}).Where("date = ?", today).Count(&count).Error; err != nil {
-		log.Printf("Failed to get visitor stats: %v", err)
+	// 从缓存表获取今日统计（性能优化）
+	var todayStats database.VisitorStats
+	result := db.Where("date = ?", today).First(&todayStats)
+
+	var todayVisitors int
+	if result.Error == gorm.ErrRecordNotFound {
+		// 如果缓存表中没有今日数据，实时计算并创建
+		var count int64
+		if err := db.Model(&database.VisitorRecord{}).Where("date = ?", today).Count(&count).Error; err != nil {
+			log.Printf("Failed to get visitor stats: %v", err)
+			c.JSON(http.StatusInternalServerError, models.APIResponse{
+				Code:    500,
+				Message: "获取统计失败",
+			})
+			return
+		}
+		todayVisitors = int(count)
+
+		// 创建缓存记录
+		var totalUniqueIPs int64
+		db.Model(&database.UniqueVisitor{}).Count(&totalUniqueIPs)
+
+		newStats := database.VisitorStats{
+			TotalUniqueIPs: int(totalUniqueIPs),
+			TodayVisitors:  todayVisitors,
+			Date:           today,
+		}
+		db.Create(&newStats)
+	} else if result.Error == nil {
+		todayVisitors = todayStats.TodayVisitors
+	} else {
+		log.Printf("Failed to get visitor stats: %v", result.Error)
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Code:    500,
 			Message: "获取统计失败",
@@ -184,11 +310,11 @@ func GetVisitorStats(c *gin.Context) {
 	}
 
 	stats := models.VisitorStats{
-		TodayVisitors: int(count),
+		TodayVisitors: todayVisitors,
 		Date:          today,
 	}
 
-	log.Printf("Visitor stats retrieved: %d visitors today", count)
+	log.Printf("Visitor stats retrieved: %d visitors today", todayVisitors)
 	c.JSON(http.StatusOK, models.APIResponse{
 		Code:    200,
 		Message: "获取统计成功",
@@ -196,13 +322,12 @@ func GetVisitorStats(c *gin.Context) {
 	})
 }
 
-// GetTotalVisitors 获取总访问人数
+// GetTotalVisitors 获取总访问人数 - 优化版本
 func GetTotalVisitors(c *gin.Context) {
 	log.Printf("GetTotalVisitors called")
 
 	db := database.GetDB()
 	if db == nil || !database.IsDBConnected() {
-		// 尝试重连
 		db = tryReconnectDB()
 		if db == nil {
 			log.Printf("Database connection is nil - returning default total")
@@ -215,7 +340,7 @@ func GetTotalVisitors(c *gin.Context) {
 		}
 	}
 
-	// 检查数据库连接是否正常
+	// 检查数据库连接
 	sqlDB, err := db.DB()
 	if err != nil {
 		log.Printf("Failed to get underlying sql.DB: %v", err)
@@ -237,9 +362,9 @@ func GetTotalVisitors(c *gin.Context) {
 		return
 	}
 
-	// 统计总访问人数（去重IP）
+	// 从 UniqueVisitor 表统计总人数（性能优化）
 	var count int64
-	if err := db.Model(&database.VisitorRecord{}).Distinct("ip").Count(&count).Error; err != nil {
+	if err := db.Model(&database.UniqueVisitor{}).Count(&count).Error; err != nil {
 		log.Printf("Failed to get total visitors: %v", err)
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Code:    500,
