@@ -64,6 +64,30 @@ cd ..
 
 echo -e "${GREEN}✅ 后端构建完成${NC}"
 
+echo -e "${BLUE}🔧 更新systemd服务配置...${NC}"
+# 更新systemd服务文件以包含新的环境变量
+cat > /etc/systemd/system/togo-backend.service << EOF
+[Unit]
+Description=ToGo Backend Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=$INSTALL_DIR
+ExecStart=$INSTALL_DIR/main
+Restart=always
+RestartSec=5
+Environment=STATIC_DIR=/opt/togo/output
+Environment=UPLOAD_DIR=/opt/togo/uploads
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# 重新加载systemd配置
+systemctl daemon-reload
+
 echo -e "${BLUE}🚀 启动后端服务...${NC}"
 systemctl start togo-backend
 

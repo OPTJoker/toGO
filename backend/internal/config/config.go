@@ -11,6 +11,9 @@ type AppConfig struct {
 	BaseURL     string
 	StaticURL   string
 	Environment string
+	// 静态文件目录配置
+	StaticDir string
+	UploadDir string
 	// 数据库配置
 	DBHost     string
 	DBPort     string
@@ -52,6 +55,9 @@ func LoadConfig() *AppConfig {
 		BaseURL:     baseURL,
 		StaticURL:   staticURL,
 		Environment: getEnv("ENVIRONMENT", "production"),
+		// 静态文件目录配置
+		StaticDir: getEnv("STATIC_DIR", "./output"),
+		UploadDir: getEnv("UPLOAD_DIR", "./uploads"),
 		// 数据库配置
 		DBHost:     getEnv("DB_HOST", "localhost"),
 		DBPort:     getEnv("DB_PORT", "3306"),
@@ -102,6 +108,22 @@ func IsDevelopment() bool {
 		LoadConfig()
 	}
 	return Config.Environment == "development"
+}
+
+// GetStaticDir 获取静态文件目录
+func GetStaticDir() string {
+	if Config == nil {
+		LoadConfig()
+	}
+	return Config.StaticDir
+}
+
+// GetUploadDir 获取上传文件目录
+func GetUploadDir() string {
+	if Config == nil {
+		LoadConfig()
+	}
+	return Config.UploadDir
 }
 
 // getEnv 获取环境变量，如果不存在则返回默认值

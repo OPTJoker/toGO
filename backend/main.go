@@ -52,11 +52,11 @@ func main() {
 	r.Use(middleware.Recovery())
 
 	// 创建上传目录
-	os.MkdirAll("./uploads", 0755)
-	os.MkdirAll("./output", 0755)
+	os.MkdirAll(cfg.UploadDir, 0755)
+	os.MkdirAll(cfg.StaticDir, 0755)
 
 	// 初始化清理服务
-	handlers.InitCleanupService("./uploads", "./output")
+	handlers.InitCleanupService(cfg.UploadDir, cfg.StaticDir)
 
 	// 静态文件服务 - 添加CORS支持
 	r.GET("/static/*filepath", func(c *gin.Context) {
@@ -71,9 +71,9 @@ func main() {
 			return
 		}
 
-		// 提供静态文件
+		// 提供静态文件 - 使用配置中的路径
 		filepath := c.Param("filepath")
-		c.File("./output" + filepath)
+		c.File(cfg.StaticDir + filepath)
 	})
 
 	// 为OPTIONS请求添加专门的处理

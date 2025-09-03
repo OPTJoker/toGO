@@ -279,6 +279,8 @@ Environment=GIN_MODE=release
 Environment=PORT=8080
 Environment=BASE_URL=http://${REMOTE_HOST}
 Environment=STATIC_BASE_URL=http://${REMOTE_HOST}/static
+Environment=STATIC_DIR=/opt/togo/output
+Environment=UPLOAD_DIR=/opt/togo/uploads
 Environment=DB_HOST=localhost
 Environment=DB_PORT=3306
 Environment=DB_USER=root
