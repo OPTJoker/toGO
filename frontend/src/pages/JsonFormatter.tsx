@@ -34,7 +34,7 @@ const JsonFormatter: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [viewMode, setViewMode] = useState<'tree' | 'code'>('tree');
-  const [parsedJson, setParsedJson] = useState<unknown>(null);
+  const [parsedJson, setParsedJson] = useState<any>(null);
   const [collapsed, setCollapsed] = useState<boolean | number>(false); // false表示全展开，true表示全收起，数字表示展开层数
 
   // 添加全局样式来覆盖Ant Design的默认focus样式
@@ -561,16 +561,19 @@ const JsonFormatter: React.FC = () => {
                           padding: '16px',
                           background: '#f8f9fa',
                           borderRadius: '6px',
-                          fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace',
-                          fontSize: '14px',
-                          lineHeight: '1.5',
                           overflow: 'auto',
                           maxHeight: fullscreen ? 'calc(100vh - 100px)' : '600px',
                           minHeight: fullscreen ? 'calc(100vh - 100px)' : '640px'
                         }}>
-                          <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                            {JSON.stringify(parsedJson, null, 2)}
-                          </pre>
+                          <JsonView
+                            value={parsedJson}
+                            collapsed={collapsed}
+                            style={{
+                              backgroundColor: 'transparent',
+                              fontSize: '14px',
+                              fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace',
+                            }}
+                          />
                         </div>
                       ) : (
                         // 代码视图（原有的语法高亮）

@@ -38,6 +38,9 @@ const Home: React.FC = () => {
         setTotalVisitors(total);
       } catch (error) {
         console.error('获取访问统计失败:', error);
+        // 无论成功还是失败都标记为已记录，避免重复请求
+        setHasRecorded(true);
+        
         // 如果是网络错误或服务不可用，不要重试
         if (error instanceof Error && error.message.includes('500')) {
           console.log('服务器内部错误，跳过统计功能');
