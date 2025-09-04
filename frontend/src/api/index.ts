@@ -55,6 +55,7 @@ export const videoToGifApi = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 120000, // 2分钟超时，专门用于视频转换
     });
 
     return response.data;
