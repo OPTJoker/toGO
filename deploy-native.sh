@@ -303,6 +303,11 @@ server {
     
     client_max_body_size 100M;
     
+    # 添加安全头来支持HTTP环境下的blob操作
+    add_header Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: http: https:; img-src 'self' data: blob: http: https:; media-src 'self' data: blob: http: https:;" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options SAMEORIGIN always;
+    
     # 前端静态文件
     location / {
         root $WEB_DIR;
