@@ -253,7 +253,8 @@ func (cs *CompressionService) GetCompressionRatio(originalSize, compressedSize i
 	if originalSize == 0 {
 		return 0
 	}
-	return float64(compressedSize) / float64(originalSize) * 100
+	// 压缩率 = (原文件大小 - 压缩后大小) / 原文件大小 * 100
+	return float64(originalSize-compressedSize) / float64(originalSize) * 100
 }
 
 // IsFileCompressed 检查文件是否已压缩

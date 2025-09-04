@@ -599,7 +599,10 @@ const VideoToGif: React.FC = () => {
                         <Col span={6}>
                           <Paragraph>
                             <strong>节省空间:</strong><br/>
-                            {formatFileSize(gifResult.size - gifResult.zipSize)}
+                            {(() => {
+                              const savedBytes = (gifResult.size || 0) - (gifResult.zipSize || 0);
+                              return savedBytes > 0 ? formatFileSize(savedBytes > 0 ? savedBytes : 0) : '0 Bytes';
+                            })()}
                           </Paragraph>
                         </Col>
                         <Col span={6}>
