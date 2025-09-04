@@ -58,6 +58,8 @@ const VideoToGif: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false); // 上传状态
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState(false);
+  const [downloadingGif, setDownloadingGif] = useState(false);
+  const [downloadingZip, setDownloadingZip] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const uploadProps: UploadProps = {
@@ -255,54 +257,64 @@ const VideoToGif: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  // 手动压缩文件
-  const handleDownloadZip = async () => {
-    if (gifResult && gifResult.zipUrl) {
-      try {
-        // 使用配置工具构建完整的下载URL
-        const downloadUrl = buildStaticUrl(gifResult.zipUrl);
-        
-        // 直接打开下载链接
-        window.open(downloadUrl, '_blank');
-        message.success('ZIP文件下载开始');
-      } catch (error) {
-        console.error('下载失败:', error);
-        message.error('下载失败，请重试');
-      }
-    }
-  };
-
   const handleDownload = async () => {
-    if (gifResult) {
+    if (gifResult && !downloadingGif) {
       try {
+        setDownloadingGif(true);
+        
         // 使用配置工具构建完整的下载URL
         const downloadUrl = buildStaticUrl(gifResult.url);
         
-        // 使用fetch获取二进制数据
-        const response = await fetch(downloadUrl);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const blob = await response.blob();
-        
-        // 创建下载链接
-        const url = window.URL.createObjectURL(blob);
+        // 直接使用链接下载，避免fetch阻塞
         const link = document.createElement('a');
-        link.href = url;
+        link.href = downloadUrl;
         link.download = 'converted.gif';
         link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         
-        // 清理URL对象
-        window.URL.revokeObjectURL(url);
-        message.success('下载成功');
+        message.success('GIF文件下载开始');
+        
+        // 延迟重置状态，给用户反馈
+        setTimeout(() => {
+          setDownloadingGif(false);
+        }, 1000);
       } catch (error) {
         console.error('下载失败:', error);
         message.error('下载失败，请重试');
+        setDownloadingGif(false);
+      }
+    }
+  };
+
+  const handleDownloadZip = async () => {
+    if (gifResult && gifResult.zipUrl && !downloadingZip) {
+      try {
+        setDownloadingZip(true);
+        
+        // 使用配置工具构建完整的下载URL
+        const downloadUrl = buildStaticUrl(gifResult.zipUrl);
+        
+        // 直接使用链接下载
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = 'converted.zip';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        message.success('ZIP文件下载开始');
+        
+        // 延迟重置状态，给用户反馈
+        setTimeout(() => {
+          setDownloadingZip(false);
+        }, 1000);
+      } catch (error) {
+        console.error('下载失败:', error);
+        message.error('下载失败，请重试');
+        setDownloadingZip(false);
       }
     }
   };
@@ -471,17 +483,21 @@ const VideoToGif: React.FC = () => {
                     type="primary" 
                     icon={<DownloadOutlined />}
                     onClick={handleDownload}
+                    loading={downloadingGif}
+                    disabled={downloadingGif}
                   >
-                    下载GIF
+                    {downloadingGif ? '下载中...' : '下载GIF'}
                   </Button>
                   {gifResult.zipUrl && (
                     <Button 
                       type="primary"
                       icon={<CompressOutlined />}
                       onClick={handleDownloadZip}
+                      loading={downloadingZip}
+                      disabled={downloadingZip}
                       style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
                     >
-                      下载ZIP
+                      {downloadingZip ? '下载中...' : '下载ZIP'}
                     </Button>
                   )}
                 </Space>
