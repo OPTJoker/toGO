@@ -7,6 +7,7 @@ set -e
 
 # 项目配置
 DomainIP="101.126.6.243"
+DomainName="tugou.site"
 
 PROJECT_NAME=togo
 REMOTE_HOST=$DomainIP  # 修复：使用变量值而不是字符串
@@ -459,9 +460,9 @@ chmod +x manage-ubuntu.sh 2>/dev/null || echo "manage-ubuntu.sh不存在，稍�
 
 echo ""
 echo -e "${GREEN}🎉 原生部署完成！${NC}"
-echo -e "${BLUE}📍 访问地址: http://${REMOTE_HOST}${NC}"
-echo -e "${BLUE}📊 后端API: http://${REMOTE_HOST}/api${NC}"
-echo -e "${BLUE}🏥 健康检查: http://${REMOTE_HOST}/api/health${NC}"
+echo -e "${BLUE}📍 访问地址: http://${DomainName}${NC}"
+echo -e "${BLUE}📊 后端API: http://${DomainName}/api${NC}"
+echo -e "${BLUE}🏥 健康检查: http://${DomainName}/api/health${NC}"
 echo ""
 echo -e "${BLUE}📋 服务管理命令:${NC}"
 echo "  systemctl status togo-backend     - 查看状态"
