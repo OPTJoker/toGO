@@ -216,7 +216,7 @@ func RecordVisitor(c *gin.Context) {
 	})
 }
 
-// GetVisitorStats 获取访问统计 - 优化版本
+// GetVisitorStats 获取访问统计 - 修复逻辑版本
 func GetVisitorStats(c *gin.Context) {
 	log.Printf("GetVisitorStats called")
 
@@ -270,38 +270,10 @@ func GetVisitorStats(c *gin.Context) {
 		return
 	}
 
-	// 从缓存表获取今日统计（性能优化）
-	var todayStats database.VisitorStats
-	result := db.Where("date = ?", today).First(&todayStats)
-
-	var todayVisitors int
-	if result.Error == gorm.ErrRecordNotFound {
-		// 如果缓存表中没有今日数据，实时计算并创建
-		var count int64
-		if err := db.Model(&database.VisitorRecord{}).Where("date = ?", today).Count(&count).Error; err != nil {
-			log.Printf("Failed to get visitor stats: %v", err)
-			c.JSON(http.StatusInternalServerError, models.APIResponse{
-				Code:    500,
-				Message: "获取统计失败",
-			})
-			return
-		}
-		todayVisitors = int(count)
-
-		// 创建缓存记录
-		var totalUniqueIPs int64
-		db.Model(&database.UniqueVisitor{}).Count(&totalUniqueIPs)
-
-		newStats := database.VisitorStats{
-			TotalUniqueIPs: int(totalUniqueIPs),
-			TodayVisitors:  todayVisitors,
-			Date:           today,
-		}
-		db.Create(&newStats)
-	} else if result.Error == nil {
-		todayVisitors = todayStats.TodayVisitors
-	} else {
-		log.Printf("Failed to get visitor stats: %v", result.Error)
+	// 统计今日唯一访客数（从UniqueVisitor表中统计今日首次访问或最后访问为今日的用户）
+	var todayUniqueVisitors int64
+	if err := db.Model(&database.UniqueVisitor{}).Where("first_seen = ? OR last_seen = ?", today, today).Count(&todayUniqueVisitors).Error; err != nil {
+		log.Printf("Failed to get today unique visitors: %v", err)
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Code:    500,
 			Message: "获取统计失败",
@@ -310,11 +282,11 @@ func GetVisitorStats(c *gin.Context) {
 	}
 
 	stats := models.VisitorStats{
-		TodayVisitors: todayVisitors,
+		TodayVisitors: int(todayUniqueVisitors),
 		Date:          today,
 	}
 
-	log.Printf("Visitor stats retrieved: %d visitors today", todayVisitors)
+	log.Printf("Today unique visitors retrieved: %d unique visitors", todayUniqueVisitors)
 	c.JSON(http.StatusOK, models.APIResponse{
 		Code:    200,
 		Message: "获取统计成功",
