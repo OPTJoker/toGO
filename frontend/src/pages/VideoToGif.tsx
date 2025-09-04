@@ -56,6 +56,8 @@ const VideoToGif: React.FC = () => {
   
   const [uploadProgress, setUploadProgress] = useState(0); // 上传进度
   const [isUploading, setIsUploading] = useState(false); // 上传状态
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const uploadProps: UploadProps = {
@@ -183,6 +185,19 @@ const VideoToGif: React.FC = () => {
         zipSize: result.zipSize,
         compressionRatio: result.compressionRatio,
       });
+
+      // 异步加载预览
+      setPreviewLoading(true);
+      setPreviewError(false);
+      const img = window.Image ? new window.Image() : document.createElement('img');
+      img.onload = () => {
+        setPreviewLoading(false);
+      };
+      img.onerror = () => {
+        setPreviewLoading(false);
+        setPreviewError(true);
+      };
+      img.src = buildStaticUrl(result.gifUrl);
       
       message.success('转换成功！');
     } catch (error: unknown) {
@@ -473,17 +488,7 @@ const VideoToGif: React.FC = () => {
               }
             >
               <Space direction="vertical" style={{ width: '100%' }}>
-                <Image
-                  src={buildStaticUrl(gifResult.url)}
-                  alt="转换后的GIF"
-                  style={{ width: '100%' }}
-                  preview={{
-                    mask: '点击预览',
-                  }}
-                />
-                
-                <Divider />
-                
+                {/* 立即显示文件信息，不等待预览加载 */}
                 <Row gutter={16}>
                   <Col span={8}>
                     <Paragraph>
@@ -501,6 +506,56 @@ const VideoToGif: React.FC = () => {
                     </Paragraph>
                   </Col>
                 </Row>
+
+                <Divider />
+
+                {/* 异步加载的GIF预览 */}
+                <div style={{ textAlign: 'center' }}>
+                  {previewLoading && (
+                    <div style={{ padding: '40px', textAlign: 'center' }}>
+                      <Progress type="circle" percent={50} />
+                      <p style={{ marginTop: '16px' }}>正在加载预览...</p>
+                    </div>
+                  )}
+                  {previewError && (
+                    <div style={{ padding: '40px', textAlign: 'center', color: '#ff4d4f' }}>
+                      <InfoCircleOutlined style={{ fontSize: '24px', marginBottom: '8px' }} />
+                      <p>预览加载失败，但不影响下载</p>
+                      <Button 
+                        type="link" 
+                        onClick={() => {
+                          setPreviewError(false);
+                          setPreviewLoading(true);
+                          // 重新尝试加载
+                          const img = window.Image ? new window.Image() : document.createElement('img');
+                          img.onload = () => {
+                            setPreviewLoading(false);
+                            setPreviewError(false);
+                          };
+                          img.onerror = () => {
+                            setPreviewLoading(false);
+                            setPreviewError(true);
+                          };
+                          img.src = buildStaticUrl(gifResult.url);
+                        }}
+                      >
+                        重新加载预览
+                      </Button>
+                    </div>
+                  )}
+                  {!previewLoading && !previewError && (
+                    <Image
+                      src={buildStaticUrl(gifResult.url)}
+                      alt="转换后的GIF"
+                      style={{ width: '100%' }}
+                      preview={{
+                        mask: '点击预览',
+                      }}
+                    />
+                  )}
+                </div>
+                
+                <Divider />
 
                 {/* ZIP压缩包信息显示 - 只有当ZIP存在时才显示 */}
                 {gifResult.zipUrl && gifResult.zipSize && gifResult.compressionRatio && (
