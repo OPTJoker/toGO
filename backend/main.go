@@ -140,6 +140,38 @@ func main() {
 			stats.GET("/total", handlers.GetTotalVisitors)
 		}
 
+		// 文件下载相关路由
+		download := api.Group("/download")
+		{
+			download.GET("/:filename", func(c *gin.Context) {
+				filename := c.Param("filename")
+				if filename == "" {
+					c.JSON(http.StatusBadRequest, models.APIResponse{
+						Code:    400,
+						Message: "文件名不能为空",
+					})
+					return
+				}
+
+				// 构建文件路径
+				filePath := cfg.StaticDir + "/" + filename
+
+				// 检查文件是否存在
+				if _, err := os.Stat(filePath); os.IsNotExist(err) {
+					c.JSON(http.StatusNotFound, models.APIResponse{
+						Code:    404,
+						Message: "文件不存在",
+					})
+					return
+				}
+
+				// 设置强制下载的头部
+				c.Header("Content-Disposition", "attachment; filename="+filename)
+				c.Header("Content-Type", "application/octet-stream")
+				c.File(filePath)
+			})
+		}
+
 		// 旧的健康检查保持兼容性
 		api.GET("/health-simple", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{

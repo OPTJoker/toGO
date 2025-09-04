@@ -259,13 +259,17 @@ const VideoToGif: React.FC = () => {
 
   const handleDownload = async () => {
     if (gifResult && !downloadingGif) {
+      setDownloadingGif(true);
+      
       try {
-        setDownloadingGif(true);
+        // 从gifResult.url中提取文件名
+        const urlParts = gifResult.url.split('/');
+        const filename = urlParts[urlParts.length - 1];
         
-        // 使用配置工具构建完整的下载URL
-        const downloadUrl = buildStaticUrl(gifResult.url);
+        // 使用专门的下载端点，设置了强制下载头部
+        const downloadUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'}/download/${filename}`;
         
-        // 直接使用链接下载，避免fetch阻塞
+        // 使用直接链接下载，后端会设置正确的Content-Disposition头
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.download = 'converted.gif';
@@ -276,10 +280,11 @@ const VideoToGif: React.FC = () => {
         
         message.success('GIF文件下载开始');
         
-        // 延迟重置状态，给用户反馈
+        // 立即重置状态，真正异步
         setTimeout(() => {
           setDownloadingGif(false);
-        }, 1000);
+        }, 500);
+        
       } catch (error) {
         console.error('下载失败:', error);
         message.error('下载失败，请重试');
