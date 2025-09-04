@@ -501,19 +501,21 @@ const JsonFormatter: React.FC = () => {
                   </div>
                 }
                 style={{ marginBottom: '16px', position: 'relative', zIndex: fullscreen ? 1001 : 'auto' }}
-                bodyStyle={fullscreen ? {
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  width: '100vw',
-                  height: '100vh',
-                  background: '#fff',
-                  zIndex: 1000,
-                  margin: 0,
-                  padding: 0,
-                  borderRadius: 0,
-                  boxShadow: 'none',
-                  overflow: 'auto',
+                styles={fullscreen ? {
+                  body: {
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    background: '#fff',
+                    zIndex: 1000,
+                    margin: 0,
+                    padding: 0,
+                    borderRadius: 0,
+                    boxShadow: 'none',
+                    overflow: 'auto',
+                  }
                 } : undefined}
               >
                 <div style={{ minHeight: fullscreen ? '100vh' : '640px', background: '#fff', borderRadius: 8, padding: 0, position: 'relative', textAlign: 'left' }}>
@@ -562,8 +564,8 @@ const JsonFormatter: React.FC = () => {
                           background: '#f8f9fa',
                           borderRadius: '6px',
                           overflow: 'auto',
-                          maxHeight: fullscreen ? 'calc(100vh - 100px)' : '600px',
-                          minHeight: fullscreen ? 'calc(100vh - 100px)' : '640px'
+                          maxHeight: fullscreen ? '100vh' : '600px',
+                          minHeight: fullscreen ? '100vh' : '640px'
                         }}>
                           <JsonView
                             value={parsedJson}
