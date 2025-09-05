@@ -17,14 +17,32 @@ import (
 )
 
 func main() {
-	// 加载.env文件
-	if err := godotenv.Load(".env.development"); err != nil {
-		log.Printf("Warning: Could not load .env.development file: %v", err)
-		// 尝试加载默认的.env文件
+	// 根据环境加载不同的.env文件
+	env := os.Getenv("GO_ENV")
+	if env == "" {
+		env = "development" // 默认为开发环境
+	}
+
+	var envFile string
+	switch env {
+	case "production":
+		envFile = ".env.production"
+	case "development":
+		envFile = ".env.development"
+	default:
+		envFile = ".env"
+	}
+
+	// 尝试加载指定的环境文件
+	if err := godotenv.Load(envFile); err != nil {
+		log.Printf("Warning: Could not load %s file: %v", envFile, err)
+		// 如果指定文件加载失败，尝试加载默认的.env文件
 		if err := godotenv.Load(); err != nil {
 			log.Printf("Warning: Could not load .env file: %v", err)
 		}
 	}
+
+	log.Printf("Loaded environment: %s", env)
 
 	// 加载配置
 	cfg := config.LoadConfig()
