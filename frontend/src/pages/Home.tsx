@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Card, Typography, Space } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import * as Icons from '@ant-design/icons';
 import { tools, categories } from '../data/tools';
@@ -10,6 +11,7 @@ import homeBgBanner from '../assets/home-bg-banner.jpg';
 const { Title, Paragraph } = Typography;
 
 const Home: React.FC = () => {
+  const navigate = useNavigate();
   const [visitorStats, setVisitorStats] = useState<VisitorStats | null>(null);
   const [totalVisitors, setTotalVisitors] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -114,9 +116,10 @@ const Home: React.FC = () => {
 
   const handleToolClick = (tool: Tool) => {
     if (tool.implemented) {
-      window.open(tool.path, '_blank');
+      // 使用React Router导航
+      navigate(tool.path);
     } else {
-      window.open(`/tools/${tool.id}`, '_blank');
+      navigate(`/tools/${tool.id}`);
     }
   };
 

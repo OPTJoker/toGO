@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Input, Button, Space, Row, Col, Typography, ColorPicker, message } from 'antd';
 import { CopyOutlined, SwapOutlined } from '@ant-design/icons';
 
@@ -111,7 +111,7 @@ const ColorTool: React.FC = () => {
     };
   };
 
-  const updateColorInfo = (hexColor: string) => {
+  const updateColorInfo = useCallback((hexColor: string) => {
     const rgb = hexToRgb(hexColor);
     if (!rgb) return;
 
@@ -126,7 +126,7 @@ const ColorTool: React.FC = () => {
       hsv: `hsv(${hsv.h}, ${hsv.s}%, ${hsv.v}%)`,
       cmyk: `cmyk(${cmyk.c}%, ${cmyk.m}%, ${cmyk.y}%, ${cmyk.k}%)`
     });
-  };
+  }, []);
 
   useEffect(() => {
     updateColorInfo(color);

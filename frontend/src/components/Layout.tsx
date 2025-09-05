@@ -49,11 +49,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div
-              onClick={() => navigate('/')}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('返回按钮被点击');
+                navigate('/');
+              }}
               style={{
-                color: '#ff7e5f', // 马卡龙橙色
+                color: '#ff7e5f',
                 fontSize: '18px',
                 height: '40px',
+                minWidth: '60px',
                 borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
@@ -66,6 +72,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 boxShadow: '0 2px 8px rgba(252,182,159,0.12)',
                 border: '1px solid #fcb69f',
                 fontWeight: 600,
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
@@ -78,7 +88,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 e.currentTarget.style.border = '1px solid #fcb69f';
               }}
             >
-              <ArrowLeftOutlined style={{ color: '#ff7e5f', fontSize: '20px' }} />
+              <ArrowLeftOutlined style={{ color: '#ff7e5f', fontSize: '20px', pointerEvents: 'none' }} />
               
             </div>
             <Title level={3} style={{ 
