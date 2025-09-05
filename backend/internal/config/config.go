@@ -53,7 +53,7 @@ func LoadConfig() *AppConfig {
 		ServerPort:  port,
 		BaseURL:     baseURL,
 		StaticURL:   staticURL,
-		Environment: getEnv("ENVIRONMENT", "production"),
+		Environment: getEnv("ENVIRONMENT", ""),
 		// 静态文件目录配置
 		StaticDir: getEnv("STATIC_DIR", "./output"),
 		UploadDir: getEnv("UPLOAD_DIR", "./uploads"),

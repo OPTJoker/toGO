@@ -13,9 +13,19 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// 加载.env文件
+	if err := godotenv.Load(".env.development"); err != nil {
+		log.Printf("Warning: Could not load .env.development file: %v", err)
+		// 尝试加载默认的.env文件
+		if err := godotenv.Load(); err != nil {
+			log.Printf("Warning: Could not load .env file: %v", err)
+		}
+	}
+
 	// 加载配置
 	cfg := config.LoadConfig()
 
