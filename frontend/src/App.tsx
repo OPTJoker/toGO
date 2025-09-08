@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
-import Layout from './components/Layout';
+import Nav from './components/Nav';
 import Home from './pages/Home';
 import VideoToGif from './pages/VideoToGif';
 import JsonFormatter from './pages/JsonFormatter';
@@ -22,7 +22,7 @@ const App: React.FC = () => {
   return (
     <ConfigProvider locale={zhCN}>
       <Router>
-        <Layout>
+        <Nav>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/tools/video-to-gif" element={<VideoToGif />} />
@@ -38,7 +38,7 @@ const App: React.FC = () => {
             <Route path="/tools/system-monitor" element={<SystemMonitor />} />
             <Route path="/tools/:toolId" element={<NotImplemented />} />
           </Routes>
-        </Layout>
+        </Nav>
       </Router>
     </ConfigProvider>
   );
