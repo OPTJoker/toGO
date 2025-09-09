@@ -250,7 +250,7 @@ func GetVisitorStats(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, models.APIResponse{
 			Code:    200,
-			Message: "统计功能暂时不可用，返回默认值",
+			Message: "毁灭吧，仓库着火🔥了",
 			Data:    stats,
 		})
 		return
@@ -264,7 +264,7 @@ func GetVisitorStats(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, models.APIResponse{
 			Code:    200,
-			Message: "统计功能暂时不可用，返回默认值",
+			Message: "毁灭吧，数据仓挂了",
 			Data:    stats,
 		})
 		return

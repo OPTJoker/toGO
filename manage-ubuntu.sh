@@ -150,8 +150,8 @@ show_logs() {
     
     case "$2" in
         backend)
-            echo -e "${BLUE}=== 后端服务日志 (最新50条) ===${NC}"
-            sudo journalctl -u togo-backend --no-pager -n 50
+            echo -e "${BLUE}=== 后端服务日志 (最新100条) ===${NC}"
+            sudo journalctl -u togo-backend --no-pager -n 100
             ;;
         nginx)
             echo -e "${BLUE}=== Nginx日志 (最新50条) ===${NC}"
@@ -159,12 +159,12 @@ show_logs() {
             ;;
         error)
             echo -e "${BLUE}=== 错误日志 ===${NC}"
-            sudo journalctl -u togo-backend --no-pager -p err -n 20
-            sudo journalctl -u nginx --no-pager -p err -n 20
+            sudo journalctl -u togo-backend --no-pager -p err -n 50
+            sudo journalctl -u nginx --no-pager -p err -n 50
             ;;
         *)
-            echo -e "${BLUE}=== 后端服务日志 (最新30条) ===${NC}"
-            sudo journalctl -u togo-backend --no-pager -n 30
+            echo -e "${BLUE}=== 后端服务日志 (最新100条) ===${NC}"
+            sudo journalctl -u togo-backend --no-pager -n 100
             echo ""
             echo -e "${BLUE}=== Nginx日志 (最新20条) ===${NC}"
             sudo journalctl -u nginx --no-pager -n 20
